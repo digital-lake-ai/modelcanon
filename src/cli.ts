@@ -12,7 +12,7 @@ export function getCliVersion(): string {
 function printHelp(): void {
   process.stdout.write(
     [
-      "ModelCanon CLI (v" + getCliVersion() + ")",
+      `ModelCanon CLI (v${getCliVersion()})`,
       "",
       "Usage:",
       "  modelcanon [mcp]                 Start the stdio MCP server (default)",

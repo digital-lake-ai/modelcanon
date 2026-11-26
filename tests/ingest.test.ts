@@ -116,7 +116,7 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
       async (input, init) => {
         const reqUrl = String(input);
         const headers = (init?.headers ?? {}) as Record<string, string>;
-        if (reqUrl.includes("googleapis.com")) {
+        if (new URL(reqUrl).hostname === "generativelanguage.googleapis.com") {
           expect(reqUrl).not.toContain("key=");
           expect(headers["x-goog-api-key"]).toBe("AIza-test-key");
           return new Response(JSON.stringify({ models: [{ name: "models/gemini-4-neon" }] }), {
@@ -160,7 +160,7 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
       headers: { Authorization: "Bearer secret-token", "x-api-key": "k-123" },
       fetchImpl: async (input, init) => {
         seenHeaders.push((init?.headers ?? {}) as Record<string, string>);
-        if (String(input).startsWith("https://origin-a.example.com")) {
+        if (new URL(String(input)).hostname === "origin-a.example.com") {
           return new Response(null, {
             status: 302,
             headers: { location: "https://origin-b.example.com/final" },

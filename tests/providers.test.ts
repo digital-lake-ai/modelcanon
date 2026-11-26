@@ -99,29 +99,41 @@ describe("Provider registry and 5 official adapters", () => {
     expect(chgEvents[0].models_affected).toContain("gemini-4-neon");
 
     const fakeFetch: typeof fetch = async (input) => {
-      const url = String(input);
-      if (url.includes("models.dev")) {
+      const parsedUrl = new URL(String(input));
+      if (parsedUrl.hostname === "models.dev") {
         return new Response(fixture("models-dev.sample.json"), { status: 200 });
       }
-      if (url.includes("model_prices_and_context_window")) {
+      if (
+        parsedUrl.hostname === "raw.githubusercontent.com" &&
+        parsedUrl.pathname.endsWith("/model_prices_and_context_window.json")
+      ) {
         return new Response(fixture("litellm.sample.json"), { status: 200 });
       }
-      if (url.includes("changelog.xml")) {
+      if (parsedUrl.hostname === "models.litellm.ai" && parsedUrl.pathname === "/changelog.xml") {
         return new Response(fixture("litellm-rss.sample.xml"), { status: 200 });
       }
-      if (url.includes("deprecations.md.txt")) {
+      if (
+        parsedUrl.hostname === "ai.google.dev" &&
+        parsedUrl.pathname.endsWith("/deprecations.md.txt")
+      ) {
         return new Response(fixture("gemini-deprecations.sample.md"), { status: 200 });
       }
-      if (url.includes("model-deprecations.md")) {
+      if (
+        parsedUrl.hostname === "platform.claude.com" &&
+        parsedUrl.pathname.endsWith("/model-deprecations.md")
+      ) {
         return new Response(fixture("claude-deprecations.sample.md"), { status: 200 });
       }
-      if (url.includes("api/docs/deprecations.md")) {
+      if (
+        parsedUrl.hostname === "developers.openai.com" &&
+        parsedUrl.pathname.endsWith("/deprecations.md")
+      ) {
         return new Response(fixture("openai-deprecations.sample.md"), { status: 200 });
       }
-      if (url.includes("deepseek.com/updates")) {
+      if (parsedUrl.hostname === "api-docs.deepseek.com" && parsedUrl.pathname === "/updates") {
         return new Response(fixture("deepseek-updates.sample.html"), { status: 200 });
       }
-      if (url.includes("kimi.ai/docs/llms.txt")) {
+      if (parsedUrl.hostname === "platform.kimi.ai" && parsedUrl.pathname === "/docs/llms.txt") {
         return new Response(
           "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) 1M context.",
           { status: 200 },

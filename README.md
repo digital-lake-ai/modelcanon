@@ -2,6 +2,14 @@
 
 # ModelCanon (`@digital-lake/modelcanon`)
 
+[![CI](https://github.com/digital-lake-ai/modelcanon/actions/workflows/ci.yml/badge.svg)](https://github.com/digital-lake-ai/modelcanon/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/digital-lake-ai/modelcanon/actions/workflows/codeql.yml/badge.svg)](https://github.com/digital-lake-ai/modelcanon/actions/workflows/codeql.yml)
+[![Organization](https://img.shields.io/badge/org-Digital_Lake-7c3aed)](https://github.com/digital-lake-ai)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript&logoColor=white)](https://github.com/digital-lake-ai/modelcanon)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20_LTS-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![Platforms](https://img.shields.io/badge/Platforms-Linux_%7C_macOS_%7C_Windows-0284c7)](#zero-friction-installation)
+[![License: MIT](https://img.shields.io/badge/license-MIT-0284c7)](./LICENSE)
+
 **Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi.**
 
 ModelCanon prevents coding agents and CI workflows from hardcoding retired model IDs, hitting unexpected shutdown redirects, or using unsupported API parameters (such as `temperature` on models that reject it) due to LLM training cutoffs. Every response is deterministic, cited with primary official URLs, and falls back instantly (`< 15 ms`) to a bundled offline seed snapshot when running in sandboxed or air-gapped environments.
