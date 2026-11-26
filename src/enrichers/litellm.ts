@@ -199,14 +199,40 @@ function extractTag(xml: string, tag: string): string {
   return regex.exec(xml)?.[1]?.trim() ?? "";
 }
 
+const XML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+};
+
+function unwrapCdata(input: string): string {
+  let out = "";
+  let pos = 0;
+  while (pos < input.length) {
+    const start = input.indexOf("<![CDATA[", pos);
+    if (start === -1) {
+      out += input.slice(pos);
+      break;
+    }
+    out += input.slice(pos, start);
+    const end = input.indexOf("]]>", start + 9);
+    if (end === -1) {
+      out += input.slice(start + 9);
+      break;
+    }
+    out += input.slice(start + 9, end);
+    pos = end + 3;
+  }
+  return out;
+}
+
 function decodeXmlEntities(input: string): string {
-  return input
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+  return unwrapCdata(input)
+    .replace(/&(amp|lt|gt|quot|#39);/gi, (match, name: string) => {
+      return XML_ENTITIES[name.toLowerCase()] ?? match;
+    })
     .trim();
 }
 

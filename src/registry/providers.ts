@@ -216,16 +216,89 @@ export function parseFlexibleDate(raw: string): string | null {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
 
+const HTML_ENTITY_MAP: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+  nbsp: " ",
+};
+
+const BLOCK_TAGS = new Set([
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "li",
+  "div",
+  "section",
+  "article",
+  "br",
+  "tr",
+]);
+
+export function stripHtmlToText(html: string, preserveBlockNewlines = false): string {
+  const chunks: string[] = [];
+  let pos = 0;
+
+  while (pos < html.length) {
+    const lt = html.indexOf("<", pos);
+    if (lt === -1) {
+      chunks.push(html.slice(pos));
+      break;
+    }
+    if (lt > pos) {
+      chunks.push(html.slice(pos, lt));
+    }
+
+    const gt = html.indexOf(">", lt + 1);
+    if (gt === -1) {
+      break;
+    }
+
+    const rawTag = html.slice(lt + 1, gt).trim();
+    const tagLower = rawTag.replace(/^\//, "").split(/[\s/]/, 1)[0]?.toLowerCase() ?? "";
+
+    if (!rawTag.startsWith("/") && (tagLower === "script" || tagLower === "style")) {
+      const lowerRest = html.toLowerCase();
+      const closeIdx = lowerRest.indexOf(`</${tagLower}`, gt + 1);
+      if (closeIdx === -1) {
+        break;
+      }
+      const closeEnd = html.indexOf(">", closeIdx);
+      pos = closeEnd === -1 ? html.length : closeEnd + 1;
+      chunks.push(" ");
+      continue;
+    }
+
+    if (preserveBlockNewlines && BLOCK_TAGS.has(tagLower)) {
+      chunks.push("\n");
+    } else {
+      chunks.push(" ");
+    }
+    pos = gt + 1;
+  }
+
+  return chunks
+    .join("")
+    .replace(/&(amp|lt|gt|quot|#39|nbsp);/gi, (match, name: string) => {
+      return HTML_ENTITY_MAP[name.toLowerCase()] ?? match;
+    })
+    .replace(/\u200B/g, "");
+}
+
 export function stripMarkdownNoise(text: string): string {
-  return text
+  const noLinks = text
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/^\s*[-*]\s+/gm, "")
-    .replace(/\{%[\s\S]*?%\}/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/\{%[\s\S]*?%\}/g, " ");
+  return stripHtmlToText(noLinks, false).replace(/\s+/g, " ").trim();
 }
 
 export function extractModelIds(text: string): string[] {

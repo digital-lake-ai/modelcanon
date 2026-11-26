@@ -112,16 +112,73 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     expect(await fetchNativeProviderModels({})).toEqual([]);
 
     const discovered = await fetchNativeProviderModels(
-      { OPENAI_API_KEY: "sk-test" },
-      async () =>
-        new Response(JSON.stringify({ data: [{ id: "gpt-6.2-astra" }] }), { status: 200 }),
+      { OPENAI_API_KEY: "sk-test", GEMINI_API_KEY: "AIza-test-key" },
+      async (input, init) => {
+        const reqUrl = String(input);
+        const headers = (init?.headers ?? {}) as Record<string, string>;
+        if (reqUrl.includes("googleapis.com")) {
+          expect(reqUrl).not.toContain("key=");
+          expect(headers["x-goog-api-key"]).toBe("AIza-test-key");
+          return new Response(JSON.stringify({ models: [{ name: "models/gemini-4-neon" }] }), {
+            status: 200,
+          });
+        }
+        return new Response(JSON.stringify({ data: [{ id: "gpt-6.2-astra" }] }), { status: 200 });
+      },
     );
     expect(discovered).toEqual([
+      {
+        provider: "gemini",
+        modelIds: ["gemini-4-neon"],
+        sourceUrl: "https://generativelanguage.googleapis.com/v1beta/models",
+      },
       {
         provider: "openai",
         modelIds: ["gpt-6.2-astra"],
         sourceUrl: "https://api.openai.com/v1/models",
       },
     ]);
+  });
+
+  it("enforces HTTPS, blocks downgrade redirects, strips cross-origin secrets, and prevents XML double-unescaping", async () => {
+    await expect(fetchResource("http://insecure.example.com/data.json")).rejects.toThrow(
+      "Only HTTPS URLs are permitted",
+    );
+
+    await expect(
+      fetchResource("https://api.example.com/start", {
+        fetchImpl: async () =>
+          new Response(null, {
+            status: 302,
+            headers: { location: "http://downgrade.example.com/target" },
+          }),
+      }),
+    ).rejects.toThrow("Only HTTPS URLs are permitted");
+
+    const seenHeaders: Array<Record<string, string>> = [];
+    const redirected = await fetchResource("https://origin-a.example.com/start", {
+      headers: { Authorization: "Bearer secret-token", "x-api-key": "k-123" },
+      fetchImpl: async (input, init) => {
+        seenHeaders.push((init?.headers ?? {}) as Record<string, string>);
+        if (String(input).startsWith("https://origin-a.example.com")) {
+          return new Response(null, {
+            status: 302,
+            headers: { location: "https://origin-b.example.com/final" },
+          });
+        }
+        return new Response("ok", { status: 200 });
+      },
+    });
+    expect(redirected.body).toBe("ok");
+    expect(seenHeaders[0].Authorization).toBe("Bearer secret-token");
+    expect(seenHeaders[1].Authorization).toBeUndefined();
+    expect(seenHeaders[1]["x-api-key"]).toBeUndefined();
+
+    const rss = parseLiteLlmChangelogRss(
+      "<rss><channel><item><title>Claude Opus 5.5</title><description>&amp;lt;script&amp;gt; claude-opus-5-5</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item></channel></rss>",
+      "2026-11-26T08:00:00Z",
+    );
+    expect(rss[0]?.agent_summary).toContain("&lt;script&gt;");
+    expect(rss[0]?.agent_summary).not.toContain("<script>");
   });
 });

@@ -15,13 +15,13 @@ export async function fetchNativeProviderModels(
 
   if (env.GEMINI_API_KEY?.trim()) {
     const key = env.GEMINI_API_KEY.trim();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`;
+    const url = "https://generativelanguage.googleapis.com/v1beta/models";
     tasks.push(
       fetchModelsEndpoint(
         "gemini",
-        "https://generativelanguage.googleapis.com/v1beta/models",
         url,
-        {},
+        url,
+        { "x-goog-api-key": key },
         (json) => {
           const list = (json as { models?: Array<{ name?: string }> }).models ?? [];
           return list.map((m) => m.name?.replace(/^models\//, "") ?? "").filter(Boolean);

@@ -6,6 +6,7 @@ import {
   type ProviderIngestionResult,
   type ProviderModelPatch,
   parseFlexibleDate,
+  stripHtmlToText,
 } from "../registry/providers.js";
 import type { UpdateEvent } from "../schema/models.js";
 import type { HttpCacheMetadata } from "../store/cache.js";
@@ -16,18 +17,7 @@ export function parseDeepSeekUpdatesHtml(
   html: string,
   detectedAt: string,
 ): { models: ProviderModelPatch[]; events: UpdateEvent[] } {
-  // Strip script/style blocks and decode tags into readable plain lines.
-  const plain = html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<\/?(?:h[1-6]|p|li|div|section|article|br)[^>]*>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\u200B/g, "");
+  const plain = stripHtmlToText(html, true);
 
   const lines = plain
     .split(/\r?\n/)

@@ -90,30 +90,40 @@ export function parseClaudeDeprecations(
     }
   }
 
-  // Extract undated alias notes:
+  // Extract undated alias notes linearly without multi-line regex backtracking:
   // "This retirement includes `claude-sonnet-4-5`, the same model's ID without a date."
-  const aliasRegex =
-    /(?:^|\n)\|\s*([^|\n]+)\s*\|\s*`?(claude-[a-z0-9-]+-\d{8})`?\s*\|\s*`?(claude-[a-z0-9-]+)`?\s*\|[\s\S]{0,240}?This retirement includes `?(claude-[a-z0-9-]+)`?/gi;
-  for (const match of markdown.matchAll(aliasRegex)) {
-    const datedId = match[2].toLowerCase();
-    const undatedAlias = match[4].toLowerCase();
-    const datedRecord = byId.get(datedId);
-    if (!datedRecord) continue;
+  let lastDatedId: string | null = null;
+  for (const rawLine of markdown.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line.startsWith("|")) {
+      const datedMatch = extractModelIds(line).find((id) => /-\d{8}$/.test(id));
+      if (datedMatch) {
+        lastDatedId = datedMatch;
+      }
+      continue;
+    }
 
-    const aliases = new Set([...(datedRecord.aliases ?? []), undatedAlias]);
-    byId.set(datedId, { ...datedRecord, aliases: [...aliases] });
+    if (lastDatedId && /this retirement includes/i.test(line)) {
+      const undatedAlias = extractModelIds(line).find((id) => !/-\d{8}$/.test(id));
+      const datedRecord = byId.get(lastDatedId);
+      if (undatedAlias && datedRecord) {
+        const aliases = new Set([...(datedRecord.aliases ?? []), undatedAlias]);
+        byId.set(lastDatedId, { ...datedRecord, aliases: [...aliases] });
 
-    if (!byId.has(undatedAlias)) {
-      byId.set(undatedAlias, {
-        canonical_id: undatedAlias,
-        provider: "claude",
-        aliases: [datedId],
-        status: datedRecord.status,
-        deprecation_date: datedRecord.deprecation_date,
-        shutdown_date: datedRecord.shutdown_date,
-        replacement_id: datedRecord.replacement_id,
-        official_url: CLAUDE_DEPRECATIONS_URL,
-      });
+        if (!byId.has(undatedAlias)) {
+          byId.set(undatedAlias, {
+            canonical_id: undatedAlias,
+            provider: "claude",
+            aliases: [lastDatedId],
+            status: datedRecord.status,
+            deprecation_date: datedRecord.deprecation_date,
+            shutdown_date: datedRecord.shutdown_date,
+            replacement_id: datedRecord.replacement_id,
+            official_url: CLAUDE_DEPRECATIONS_URL,
+          });
+        }
+      }
+      lastDatedId = null;
     }
   }
 

@@ -69,6 +69,13 @@ describe("Provider registry and 5 official adapters", () => {
     expect(deepseek.events[0]?.published_at).toBe("2026-11-13");
     expect(deepseek.models[0]?.canonical_id).toBe("deepseek-flash");
 
+    const sanitizedDeepseek = parseDeepSeekUpdatesHtml(
+      "<article><p>Date: 2026-11-13</p><h2>Safe title</h2><script>alert(1)</script><p>The deepseek-flash model supports &amp;lt;tag&amp;gt; cleanly in API.</p></article>",
+      "2026-11-26T08:00:00Z",
+    );
+    expect(sanitizedDeepseek.events[0]?.agent_summary).not.toContain("alert(1)");
+    expect(sanitizedDeepseek.events[0]?.agent_summary).toContain("&lt;tag&gt;");
+
     const kimi = parseKimiDocs(
       "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) with 1M context.",
       "All K3 series models support a 1,048,576-token context window.",

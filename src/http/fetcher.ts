@@ -7,6 +7,7 @@ export interface FetchResourceOptions {
   headers?: Record<string, string>;
   timeoutMs?: number;
   maxBytes?: number;
+  allowHttpForTests?: boolean;
   fetchImpl?: typeof fetch;
 }
 
@@ -41,6 +42,30 @@ export class FetchHttpError extends Error {
   }
 }
 
+const SENSITIVE_HEADERS = new Set(["authorization", "x-api-key", "x-goog-api-key"]);
+const MAX_REDIRECTS = 3;
+
+function assertAllowedUrl(rawUrl: string, allowHttpForTests: boolean): URL {
+  const parsed = new URL(rawUrl);
+  if (parsed.protocol === "https:") {
+    return parsed;
+  }
+  if (allowHttpForTests && parsed.protocol === "http:") {
+    return parsed;
+  }
+  throw new Error(`Only HTTPS URLs are permitted (received ${parsed.protocol})`);
+}
+
+function stripSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
+  const sanitized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (!SENSITIVE_HEADERS.has(key.toLowerCase())) {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
+
 export async function fetchResource(
   url: string,
   options: FetchResourceOptions = {},
@@ -48,32 +73,61 @@ export async function fetchResource(
   const fetchFn = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? 10_000;
   const maxBytes = options.maxBytes ?? 2 * 1024 * 1024;
+  const allowHttpForTests = options.allowHttpForTests ?? false;
 
-  const headers: Record<string, string> = {
+  let currentUrl = assertAllowedUrl(url, allowHttpForTests);
+  let requestHeaders: Record<string, string> = {
     "User-Agent": "ModelCanon/0.1.0 (+https://github.com/digital-lake-ai/modelcanon)",
     ...options.headers,
   };
   if (options.accept) {
-    headers.Accept = options.accept;
+    requestHeaders.Accept = options.accept;
   }
   if (options.etag) {
-    headers["If-None-Match"] = options.etag;
+    requestHeaders["If-None-Match"] = options.etag;
   }
   if (options.lastModified) {
-    headers["If-Modified-Since"] = options.lastModified;
+    requestHeaders["If-Modified-Since"] = options.lastModified;
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // Always issue HTTP GET (never HEAD) to avoid upstream 500 errors on catalog endpoints.
-    const response = await fetchFn(url, {
-      method: "GET",
-      headers,
-      redirect: "follow",
-      signal: controller.signal,
-    });
+    let response: Response | null = null;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+      // Always issue HTTP GET (never HEAD) to avoid upstream 500 errors on catalog endpoints.
+      const res = await fetchFn(currentUrl.toString(), {
+        method: "GET",
+        headers: requestHeaders,
+        redirect: "manual",
+        signal: controller.signal,
+      });
+
+      if (res.status >= 300 && res.status < 400 && res.status !== 304) {
+        const location = res.headers.get("location");
+        await res.body?.cancel();
+        if (!location || hop === MAX_REDIRECTS) {
+          throw new FetchHttpError(currentUrl.toString(), res.status);
+        }
+        const nextUrl = assertAllowedUrl(
+          new URL(location, currentUrl).toString(),
+          allowHttpForTests,
+        );
+        if (nextUrl.origin !== currentUrl.origin) {
+          requestHeaders = stripSensitiveHeaders(requestHeaders);
+        }
+        currentUrl = nextUrl;
+        continue;
+      }
+
+      response = res;
+      break;
+    }
+
+    if (!response) {
+      throw new FetchHttpError(currentUrl.toString(), 310);
+    }
 
     const etag = response.headers.get("etag");
     const lastModified = response.headers.get("last-modified");
@@ -93,7 +147,7 @@ export async function fetchResource(
     }
 
     if (!response.ok) {
-      throw new FetchHttpError(url, response.status);
+      throw new FetchHttpError(currentUrl.toString(), response.status);
     }
 
     const contentLengthHeader = response.headers.get("content-length");
@@ -101,7 +155,7 @@ export async function fetchResource(
       const declaredBytes = Number.parseInt(contentLengthHeader, 10);
       if (Number.isFinite(declaredBytes) && declaredBytes > maxBytes) {
         await response.body?.cancel();
-        throw new FetchLimitError(url, maxBytes);
+        throw new FetchLimitError(currentUrl.toString(), maxBytes);
       }
     }
 
@@ -109,7 +163,7 @@ export async function fetchResource(
       const text = await response.text();
       const buf = Buffer.from(text, "utf8");
       if (buf.byteLength > maxBytes) {
-        throw new FetchLimitError(url, maxBytes);
+        throw new FetchLimitError(currentUrl.toString(), maxBytes);
       }
       return {
         status: response.status,
@@ -134,7 +188,7 @@ export async function fetchResource(
         totalBytes += value.byteLength;
         if (totalBytes > maxBytes) {
           await reader.cancel();
-          throw new FetchLimitError(url, maxBytes);
+          throw new FetchLimitError(currentUrl.toString(), maxBytes);
         }
         chunks.push(value);
       }
