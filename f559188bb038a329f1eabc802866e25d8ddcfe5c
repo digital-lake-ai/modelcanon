@@ -1,0 +1,36 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T07:55:30.043Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T3",
+    "title": "Modular provider registry and 5 official Markdown/RSS adapters",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/registry/providers.ts",
+        "src/providers/gemini.ts",
+        "src/providers/claude.ts",
+        "src/providers/openai.ts",
+        "src/providers/deepseek.ts",
+        "src/providers/kimi.ts",
+        "tests/fixtures/**",
+        "tests/providers.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm run build && npx vitest run tests/providers.test.ts",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
