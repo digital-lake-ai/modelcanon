@@ -1,6 +1,6 @@
 # ModelCanon — Official AI Model Changelog, Deprecation & API Spec MCP Server
 
-> Deterministic, cross-platform MCP server (v0.1.1) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.
+> Deterministic, cross-platform MCP server (v0.1.2) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.
 
 ## Packages & Supported Platforms
 - npm: `@digital-lake/modelcanon` (`npx -y @digital-lake/modelcanon`)

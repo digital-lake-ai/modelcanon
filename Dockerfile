@@ -12,6 +12,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 LABEL org.opencontainers.image.title="ModelCanon" \
+      org.opencontainers.image.version="0.1.2" \
       org.opencontainers.image.description="Cross-platform deterministic MCP server for official AI model changelogs, deprecations, and API specs" \
       org.opencontainers.image.authors="HorchataHTML (https://github.com/HorchataHTML), Digital Lake (https://github.com/digital-lake-ai)" \
       org.opencontainers.image.source="https://github.com/digital-lake-ai/modelcanon" \
