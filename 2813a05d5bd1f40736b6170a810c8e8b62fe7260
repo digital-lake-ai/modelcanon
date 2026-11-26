@@ -1,0 +1,32 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-26T20:08:54.762Z",
+  "issue": {
+    "id": 22,
+    "title": "fix(catalog): enforce first-party RSS allowlist, generational base-model ranking, and release v0.1.4",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T4",
+    "title": "Implement linear generational and base-over-variant model ranker",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/domain/rank.ts",
+        "src/domain/query.ts",
+        "tests/rank.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npx vitest run tests/rank.test.ts tests/mcp-server.test.ts && npx biome check --error-on-warnings .",
+      "assignee": "gemini/4-hydrogen (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 88
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/4-hydrogen (antigravity)"
+}
