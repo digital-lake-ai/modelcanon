@@ -406,6 +406,10 @@ export async function ingestFullCatalog(options?: {
     b.published_at.localeCompare(a.published_at),
   );
 
+  if (modelMap.size === 0 && dedupEvents.length === 0) {
+    throw new Error("All upstream catalog sources failed or returned empty data");
+  }
+
   return {
     snapshot: {
       schema_version: "1.0.0",
