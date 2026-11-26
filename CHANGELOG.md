@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-11-26
+
+### Changed
+- **AI-SEO Hero & Multi-Platform Documentation:** Upgraded `README.md` and `llms.txt` with a descriptive AI-SEO header, centered hero block, per-OS MCP client configuration and native cache paths (`Linux`, `macOS`, `Windows`), and ecosystem distribution matrix.
+- **Multi-Platform & Provenance Metadata Parity:** Standardized explicit OS classifiers (`Operating System :: MacOS`, `Microsoft :: Windows`, `POSIX :: Linux`), keywords, and lead author/copyright attribution (`HorchataHTML` & `Digital Lake`) across `package.json`, `pyproject.toml`, `server.json`, `Dockerfile`, `LICENSE`, and `NOTICE.md`.
+- **Trusted Publisher SLSA Provenance:** First automated GitHub OIDC Trusted Publisher release (`--provenance`) across npm, PyPI, and the Official MCP Registry, extending `scripts/sync-version.mjs` to guard `MCP_SERVER_VERSION` and HTTP `User-Agent` headers.
+
 ## [0.1.0] - 2026-11-26
 
 ### Added
