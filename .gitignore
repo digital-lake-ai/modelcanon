@@ -1,0 +1,22 @@
+# LogNexus ephemeral runtime state
+.lognexus/state.json
+.lognexus/state.json.bak
+.lognexus/handoff.md
+.lognexus/telemetry.json
+.lognexus/snapshot-v2.json
+.lognexus/telemetry*.md
+.lognexus/update-check.json
+.lognexus/terms-consent.json
+
+# Internal context & secrets
+docs/contexto/
+.env
+.env.*
+!.env.example
+
+# Internal context & private workspace exclusions
+docs/historial_previo/
+.agents/
+*.local
+.vscode/
+.idea/

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./package-lock.json)",
+      "Grep(./package-lock.json)",
+      "Read(./npm-shrinkwrap.json)",
+      "Read(./pnpm-lock.yaml)",
+      "Read(./yarn.lock)",
+      "Read(./bun.lockb)",
+      "Read(./Cargo.lock)",
+      "Read(./poetry.lock)",
+      "Read(./uv.lock)",
+      "Read(./.venv/**)",
+      "Read(./venv/**)",
+      "Read(./__pycache__/**)",
+      "Read(./dist/**)",
+      "Read(./dist-pypi/**)",
+      "Read(./build/**)",
+      "Read(./coverage/**)",
+      "Read(./.next/**)"
+    ]
+  }
+}
