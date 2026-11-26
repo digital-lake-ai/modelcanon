@@ -19,9 +19,16 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
     expect(pkg.name).toBe("@digital-lake/modelcanon");
     expect(pkg.version).toBe("0.1.0");
     expect(pkg.mcpName).toBe("io.github.digital-lake-ai/modelcanon");
+    expect(pkg.os).toEqual(["darwin", "linux", "win32"]);
+    expect(pkg.keywords).toEqual(
+      expect.arrayContaining(["linux", "macos", "windows", "cross-platform"]),
+    );
+    expect(JSON.stringify(pkg.author)).toContain("Digital Lake");
+    expect(JSON.stringify(pkg.contributors)).toContain("HorchataHTML");
     expect(server.name).toBe(pkg.mcpName);
     expect(server.version).toBe(pkg.version);
     expect(glama.$schema).toBe("https://glama.ai/mcp/schemas/server.json");
+    expect(glama.maintainers).toEqual(["digital-lake-ai", "HorchataHTML"]);
     expect(smithery).toContain("@digital-lake/modelcanon");
     expect(existsSync(resolve(ROOT, "Dockerfile"))).toBe(true);
   });
@@ -33,6 +40,11 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
 
     expect(pyproject).toContain('name = "modelcanon-mcp"');
     expect(pyproject).toContain('version = "0.1.0"');
+    expect(pyproject).toContain('"Operating System :: MacOS"');
+    expect(pyproject).toContain('"Operating System :: Microsoft :: Windows"');
+    expect(pyproject).toContain('"Operating System :: POSIX :: Linux"');
+    expect(pyproject).toContain("HorchataHTML");
+    expect(pyproject).toContain("Digital Lake");
     expect(pyInit).toContain('__version__ = "0.1.0"');
     expect(pyInit).toContain('"npx.cmd"');
     expect(pyInit).toContain("shell=False");
@@ -41,7 +53,20 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
 
   it("includes MCP registry ownership comment, docs, and passes version:check", () => {
     const readme = readFileSync(resolve(ROOT, "README.md"), "utf8");
+    const license = readFileSync(resolve(ROOT, "LICENSE"), "utf8");
+    const notice = readFileSync(resolve(ROOT, "NOTICE.md"), "utf8");
     expect(readme.startsWith("<!-- mcp-name: io.github.digital-lake-ai/modelcanon -->")).toBe(true);
+    expect(readme).toContain("**Linux**, **macOS**, and **Windows**");
+    expect(readme).toContain("Copyright (c) 2026 HorchataHTML (https://github.com/HorchataHTML)");
+    expect(readme).toContain(
+      "Copyright (c) 2026 Digital Lake (https://github.com/digital-lake-ai) and ModelCanon contributors.",
+    );
+    expect(license).toContain("Copyright (c) 2026 HorchataHTML (https://github.com/HorchataHTML)");
+    expect(license).toContain(
+      "Copyright (c) 2026 Digital Lake (https://github.com/digital-lake-ai) and ModelCanon contributors",
+    );
+    expect(notice).toContain("HorchataHTML");
+    expect(notice).toContain("Digital Lake");
     expect(existsSync(resolve(ROOT, "llms.txt"))).toBe(true);
     expect(existsSync(resolve(ROOT, "CHANGELOG.md"))).toBe(true);
     expect(existsSync(resolve(ROOT, "SECURITY.md"))).toBe(true);
