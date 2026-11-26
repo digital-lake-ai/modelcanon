@@ -78,8 +78,15 @@ function findDirectOrAliasMatch(
   return null;
 }
 
+function stripTrailingClientTag(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed.endsWith(")")) return trimmed;
+  const openIdx = trimmed.lastIndexOf("(");
+  return openIdx > 0 ? trimmed.slice(0, openIdx).trim() : trimmed;
+}
+
 function normalizeHarnessNotation(rawTrimmedLower: string): string {
-  const withoutTag = rawTrimmedLower.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  const withoutTag = stripTrailingClientTag(rawTrimmedLower);
   const segments = withoutTag.split("/").filter(Boolean);
   if (segments.length >= 2) {
     const last = segments[segments.length - 1];
