@@ -1,0 +1,30 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T15:15:38.988Z",
+  "issue": {
+    "id": 18,
+    "title": "chore(release): add Glama & SLSA badges, upgrade GitHub Actions to v7, and release v0.1.2",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T1",
+    "title": "Add Glama and SLSA badges to README and upgrade GitHub Actions workflows",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "README.md",
+        ".github/workflows/ci.yml",
+        ".github/workflows/codeql.yml",
+        ".github/workflows/release.yml"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
