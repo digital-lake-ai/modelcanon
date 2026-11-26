@@ -1,0 +1,38 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T08:01:36.828Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T7",
+    "title": "Version sync, 3-OS CI/CD workflows and AEO documentation",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "scripts/sync-version.mjs",
+        ".github/dependabot.yml",
+        ".github/workflows/ci.yml",
+        ".github/workflows/codeql.yml",
+        ".github/workflows/release.yml",
+        "llms.txt",
+        "README.md",
+        "CHANGELOG.md",
+        "SECURITY.md",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npm run seed:check && npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
