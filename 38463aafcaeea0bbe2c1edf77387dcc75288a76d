@@ -1,0 +1,33 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T16:43:33.233Z",
+  "issue": {
+    "id": 20,
+    "title": "fix(catalog): harden model ID hygiene, lifecycle authority, SWR cache, and release v0.1.3",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T2",
+    "title": "Enforce patch authority precedence, DeepSeek discontinuation, and unified retired status",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/registry/providers.ts",
+        "src/providers/deepseek.ts",
+        "src/providers/kimi.ts",
+        "src/domain/query.ts",
+        "src/mcp/server.ts",
+        "tests/providers.test.ts",
+        "tests/mcp-server.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
