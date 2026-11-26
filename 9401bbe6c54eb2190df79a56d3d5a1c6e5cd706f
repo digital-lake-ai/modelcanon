@@ -1,0 +1,36 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T09:31:36.272Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-1"
+  },
+  "subtask": {
+    "id": "T10",
+    "title": "Optimize MCP tool definitions for TDQS Grade A and harden CI/Docker",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/mcp/tools.ts",
+        "Dockerfile",
+        ".github/workflows/ci.yml",
+        "scripts/publish-release.mjs",
+        "package.json",
+        "pyproject.toml",
+        "tests/mcp-server.test.ts",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npm run lint && npm run build && npm test",
+      "assignee": "gemini/4-argon (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-1"
+}
