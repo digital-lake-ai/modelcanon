@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "modelcanon-mcp"
-version = "0.1.2"
+version = "0.1.3"
 description = "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Gemini, Claude, OpenAI, DeepSeek, and Kimi across Linux, macOS, and Windows."
 readme = "README.md"
 license = "MIT"

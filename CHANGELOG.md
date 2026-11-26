@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-11-26
+
+### Fixed
+- **Catalog ID Hygiene & Official Kimi Tables (`H1`, `B2`, `B3`):** Filtered `.md`/documentation slugs and non-conversational enricher keys (`ft:*`, `"search"`, `"container"`), added `https://platform.kimi.ai/docs/models.md` GFM table ingestion, removed noisy `llms.txt` pseudo-events, and scoped K3 1M-token constraints strictly to `kimi-k3*` models.
+- **Lifecycle Authority & Unified Effective Status (`H2`, `B1`, `B4`, `B5`):** Introduced `"explicit" | "mention"` patch authority so prose mentions never overwrite `catalog_only` deprecation metadata or official URLs, detected DeepSeek discontinuation notices (`deepseek-chat` / `deepseek-reasoner` retired `2026-07-24`), and unified `resolveEffectiveStatus()` across `audit_model_id`, `list_active_models`, and `modelcanon://deprecations/upcoming`.
+- **Event Chronology & Third-Party Proxy Filtering (`H3`, `B8`):** Clamped `published_at` dates (`<= today`), preserved future shutdown horizons in `effective_date`, excluded third-party reseller items (`Azure`, `Bedrock`, `Vertex`, `Baseten`, `Together`, `AIHubMix`) from LiteLLM RSS events, and enforced upper UTC bounds on `days` queries.
+- **SWR Cache Deduplication & Versioned Envelopes (`H4`, `B6`, `B7`):** Added `inFlightRefresh` deduplication, 5-minute failure cooldown, `cli` vs `server` refresh modes, `.unref()` timer safety, and `CACHE_PACKAGE_VERSION` invalidation on upgrades.
+
+### Changed
+- **Agnostic Harness Normalization & Round-Robin Catalog Ranking (`H5`, `H8`):** Supported `gemini/`/`claude/`/`kimi/`/`xai/` prefixes, trailing `(client)` tags, and verified effort suffixes (`-high`/`-medium`/`-low`), prioritized flagship conversational models, and interleaved `provider: "all"` results round-robin.
+- **Seed Integrity Guards & Documentation Parity (`B9`, `H9`):** Extended `scripts/build-seed.mjs` (`--check`) to assert catalog and event integrity, aligned Windows `%LOCALAPPDATA%\modelcanon\cache` casing in `README.md`, and extended `scripts/sync-version.mjs` across all 10 version surfaces.
+
 ## [0.1.2] - 2026-11-26
 
 ### Changed
