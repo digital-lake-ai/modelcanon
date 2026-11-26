@@ -37,11 +37,38 @@ function assertSnapshotIntegrity(snapshot) {
     }
   }
 
+  const catalogKeys = new Set(
+    snapshot.models.map((m) => `${m.provider}:${m.canonical_id.toLowerCase()}`),
+  );
+
   for (const evt of snapshot.events) {
     if (evt.published_at > todayIso) {
       throw new Error(
         `Seed integrity failed: event '${evt.id}' has future published_at '${evt.published_at}' (> ${todayIso}).`,
       );
+    }
+    if (evt.id.startsWith("evt_litellm_")) {
+      if (
+        /\b(GMI Cloud|Replicate|NVIDIA NIM|ChatGPT Subscription|Vertex AI|Azure|Bedrock)\b/i.test(
+          evt.title,
+        )
+      ) {
+        throw new Error(
+          `Seed integrity failed: third-party reseller event leaked into seed: '${evt.title}'.`,
+        );
+      }
+      if (evt.models_affected.length === 0) {
+        throw new Error(
+          `Seed integrity failed: LiteLLM event '${evt.id}' has empty models_affected.`,
+        );
+      }
+      for (const affected of evt.models_affected) {
+        if (!catalogKeys.has(`${evt.provider}:${affected.toLowerCase()}`)) {
+          throw new Error(
+            `Seed integrity failed: LiteLLM event '${evt.id}' references non-catalog ID '${affected}'.`,
+          );
+        }
+      }
     }
   }
 
