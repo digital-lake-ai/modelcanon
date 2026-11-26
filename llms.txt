@@ -1,11 +1,12 @@
-# ModelCanon (`@digital-lake/modelcanon`)
+# ModelCanon — Official AI Model Changelog, Deprecation & API Spec MCP Server
 
-> Deterministic MCP server (v0.1.0) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi.
+> Deterministic, cross-platform MCP server (v0.1.0) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.
 
-## Packages
+## Packages & Supported Platforms
 - npm: `@digital-lake/modelcanon` (`npx -y @digital-lake/modelcanon`)
-- PyPI: `modelcanon-mcp` (`uvx modelcanon-mcp`)
+- PyPI: `modelcanon-mcp` (`uvx modelcanon-mcp` / `pip install modelcanon-mcp`)
 - MCP Registry ID: `io.github.digital-lake-ai/modelcanon`
+- Supported Operating Systems: Linux (`linux`), macOS (`darwin`), and Windows (`win32`) — Node.js >= 20 & Python >= 3.10
 
 ## MCP Tools (Read-Only, `outputSchema` + `structuredContent`)
 - `audit_model_id(model_id)`: Checks active/deprecated/retired/unknown status, UTC days until shutdown, official replacement ID, context/output limits, parameter constraints, and source URL.
@@ -23,3 +24,7 @@
 - DeepSeek: `https://api-docs.deepseek.com/updates`
 - Kimi: `https://platform.kimi.ai/docs/llms.txt`, `https://platform.moonshot.ai/docs/pricing/chat.md`
 - Deterministic catalog enrichers: `https://models.dev/api.json`, `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`, `https://models.litellm.ai/changelog.xml`
+
+## Authors & License
+- Maintainers: HorchataHTML (`https://github.com/HorchataHTML`) and Digital Lake (`https://github.com/digital-lake-ai`)
+- License: MIT (`https://github.com/digital-lake-ai/modelcanon/blob/main/LICENSE`) and `NOTICE.md` (`https://github.com/digital-lake-ai/modelcanon/blob/main/NOTICE.md`)

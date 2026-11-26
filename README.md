@@ -1,18 +1,43 @@
 <!-- mcp-name: io.github.digital-lake-ai/modelcanon -->
 
-# ModelCanon (`@digital-lake/modelcanon`)
+# ModelCanon — Official AI Model Changelog, Deprecation & API Spec MCP Server
+
+<p align="center">
+  <strong>Deterministic AI Model Lifecycle, Deprecation &amp; Live API Specification Engine for Coding Agents</strong><br>
+  Available on npm as <code>@digital-lake/modelcanon</code> and PyPI as <code>modelcanon-mcp</code> across <strong>Linux</strong>, <strong>macOS</strong>, and <strong>Windows</strong>.<br>
+  Explore the 3 annotated read-only MCP tools &amp; 2 catalog resources in <a href="https://github.com/digital-lake-ai/modelcanon/blob/main/llms.txt">llms.txt</a> and <a href="https://github.com/digital-lake-ai/modelcanon/blob/main/server.json">server.json</a>.
+</p>
+
+<div align="center">
 
 [![CI](https://github.com/digital-lake-ai/modelcanon/actions/workflows/ci.yml/badge.svg)](https://github.com/digital-lake-ai/modelcanon/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/digital-lake-ai/modelcanon/actions/workflows/codeql.yml/badge.svg)](https://github.com/digital-lake-ai/modelcanon/actions/workflows/codeql.yml)
+[![npm version](https://img.shields.io/npm/v/@digital-lake/modelcanon?color=0969da&logo=npm&label=npm)](https://www.npmjs.com/package/@digital-lake/modelcanon)
+[![PyPI version](https://img.shields.io/pypi/v/modelcanon-mcp?color=3775a9&logo=pypi&logoColor=white&label=pypi)](https://pypi.org/project/modelcanon-mcp/)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-0d9488)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.digital-lake-ai/modelcanon)
 [![Organization](https://img.shields.io/badge/org-Digital_Lake-7c3aed)](https://github.com/digital-lake-ai)
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript&logoColor=white)](https://github.com/digital-lake-ai/modelcanon)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20_LTS-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![Platforms](https://img.shields.io/badge/Platforms-Linux_%7C_macOS_%7C_Windows-0284c7)](#zero-friction-installation)
-[![License: MIT](https://img.shields.io/badge/license-MIT-0284c7)](./LICENSE)
+[![Python](https://img.shields.io/badge/Python-%3E%3D3.10_(uvx)-3775a9?logo=python&logoColor=white)](https://pypi.org/project/modelcanon-mcp/)
+[![Platforms](https://img.shields.io/badge/Platforms-Linux_%7C_macOS_%7C_Windows-0284c7)](#installation--cross-platform-setup)
+[![Offline Seed](https://img.shields.io/badge/Offline_Seed-%3C15ms_Fallback-2ea44f)](#what-is-modelcanon)
+[![License: MIT](https://img.shields.io/badge/license-MIT-0284c7)](https://github.com/digital-lake-ai/modelcanon/blob/main/LICENSE)
 
-**Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi.**
+</div>
 
-ModelCanon prevents coding agents and CI workflows from hardcoding retired model IDs, hitting unexpected shutdown redirects, or using unsupported API parameters (such as `temperature` on models that reject it) due to LLM training cutoffs. Every response is deterministic, cited with primary official URLs, and falls back instantly (`< 15 ms`) to a bundled offline seed snapshot when running in sandboxed or air-gapped environments.
+---
+
+## What is ModelCanon?
+
+AI coding agents and automated pipelines routinely fail due to **model lifecycle drift**: LLM training cutoffs cause agents to hardcode deprecated or retired model IDs, miss official replacement slugs, or pass rejected parameters (such as `temperature` on reasoning-only models).
+
+**ModelCanon provides a deterministic, citation-backed source of truth via the Model Context Protocol (MCP).** It ingests official machine-readable provider documentation without invoking any LLM at runtime:
+- **Clients:** Claude Code, Claude Desktop, Cursor, Codex, GitHub Copilot, Google Antigravity, Kimi Code, VS Code, Windsurf, Zed.
+- **Providers Tracked:** Google Gemini (`gemini`), Anthropic Claude (`claude`), OpenAI (`openai`), DeepSeek (`deepseek`), and Moonshot AI / Kimi (`kimi`).
+- **Supported Platforms:** **Linux**, **macOS**, and **Windows** (`linux`, `darwin`, `win32` — 100% cross-platform Node.js `>= 20` & Python `>= 3.10` `uvx`, zero native binary dependencies, verified continuously across Ubuntu, macOS, and Windows CI runners).
+
+Every query is cited with primary official URLs and falls back instantaneously (`< 15 ms`) to a bundled offline seed snapshot (`data/seed.json`) when running inside air-gapped, sandboxed, or read-only environments.
 
 ---
 
@@ -30,9 +55,18 @@ Specs, context windows, output limits, and per-1M token pricing are deterministi
 
 ---
 
-## Zero-Friction Installation
+## Installation & Cross-Platform Setup
 
-### Option 1: Node.js (`npx`) — Cursor, VS Code, Claude Desktop, Antigravity
+ModelCanon runs natively on **Linux**, **macOS**, and **Windows** via `npx` (`@digital-lake/modelcanon`) or Python `uvx` (`modelcanon-mcp`).
+
+**MCP Client Configuration Paths:**
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json` or `~/.claude.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json` or `~/.claude.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json` or `~/.claude.json`
+- **Google Antigravity:** `~/.gemini/config/mcp_config.json` or `.agents/mcp_config.json`
+- **Cursor / VS Code:** `~/.cursor/mcp.json`, `.cursor/mcp.json`, or `.vscode/mcp.json`
+
+### Option 1: Node.js (`npx`) — Linux, macOS, Windows
 
 ```json
 {
@@ -45,7 +79,7 @@ Specs, context windows, output limits, and per-1M token pricing are deterministi
 }
 ```
 
-### Option 2: Python (`uvx`)
+### Option 2: Python (`uvx` / `pip` from PyPI) — Linux, macOS, Windows
 
 ```json
 {
@@ -58,13 +92,35 @@ Specs, context windows, output limits, and per-1M token pricing are deterministi
 }
 ```
 
+Or launch/install directly from the terminal:
+```bash
+uvx modelcanon-mcp
+pip install modelcanon-mcp
+```
+
+### Option 3: Smithery CLI
+
+```bash
+npx -y @smithery/cli install @digital-lake/modelcanon --client claude
+```
+
+**Cross-Platform Native Cache Paths** (with automatic in-memory fallback on read-only filesystems):
+- **Linux:** `$XDG_CACHE_HOME/modelcanon` (defaults to `~/.cache/modelcanon`)
+- **macOS:** `~/Library/Caches/modelcanon`
+- **Windows:** `%LOCALAPPDATA%\modelcanon\Cache`
+
 ---
 
-## MCP Tools & Example Output
+## MCP Tools, Resources & Example Output
 
-1. **`audit_model_id(model_id)`**: Checks `active | deprecated | retired | unknown`, days remaining until shutdown, official replacement ID, context/output limits, parameter constraints, and citation URL.
-2. **`get_latest_updates(provider?, days?, category?, limit?)`**: Returns compact extractive changelog and deprecation entries (`< 150` tokens/item).
+### Annotated Read-Only Tools (`outputSchema` + `structuredContent`)
+1. **`audit_model_id(model_id)`**: Checks `active | deprecated | retired | unknown`, UTC days remaining until shutdown, official replacement ID, context/output limits, parameter constraints, and primary citation URL (`readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`).
+2. **`get_latest_updates(provider?, days?, category?, limit?)`**: Returns compact extractive changelog and deprecation entries (`< 150` tokens/item) with `source_url` and `confidence`.
 3. **`list_active_models(provider?, include_deprecated?, limit?)`**: Lists active model IDs with context windows, max output tokens, and pricing per 1M tokens.
+
+### Live MCP Resources
+- `modelcanon://catalog/summary` — Snapshot metadata, provider coverage, and cache freshness.
+- `modelcanon://deprecations/upcoming` — Models currently deprecated or scheduled for shutdown.
 
 Example `audit_model_id({ "model_id": "claude-sonnet-4-5" })`:
 
@@ -103,36 +159,48 @@ npx @digital-lake/modelcanon sync --json           # Refresh local JSON cache
 
 ## Frequently Asked Questions
 
-**How can my coding agent check if a Gemini or Claude model ID is deprecated?**
-Install ModelCanon in your MCP client and invoke `audit_model_id` with any dated or undated model ID (e.g., `claude-sonnet-4-5`, `gemini-2.5-pro`, `gpt-4.1`).
+**How can my coding agent check if a Gemini, Claude, or OpenAI model ID is deprecated?**
+Install ModelCanon in your MCP client (`npx -y @digital-lake/modelcanon` or `uvx modelcanon-mcp`) and invoke `audit_model_id` with any dated or undated model ID (e.g., `claude-sonnet-4-5`, `gemini-2.5-pro`, `gpt-4.1`).
 
 **Does ModelCanon require provider API keys?**
-No. All five adapters, `models.dev`, and LiteLLM operate without API keys. Setting `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, or `MOONSHOT_API_KEY` only enables optional live `GET /models` cross-checks.
+No. All five official provider adapters, `models.dev`, and LiteLLM operate without API keys. Setting `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, or `MOONSHOT_API_KEY` only enables optional live `GET /models` cross-checks.
 
 **What happens if a model ID is unknown?**
 ModelCanon returns `status: "unknown"` rather than guessing `"active"`.
 
-**Does it work offline or inside read-only containers?**
-Yes. Every release ships a verified `data/seed.json` snapshot and falls back automatically to in-memory cache when disk writes are blocked.
+**Does it work on Windows, macOS, Linux, and read-only Docker containers?**
+Yes. Every commit is tested on `ubuntu-latest`, `macos-latest`, and `windows-latest`, ships a verified `data/seed.json` snapshot, and falls back automatically to in-memory cache when disk writes are blocked.
 
 ---
 
-## First-Release Distribution Checklist (`v0.1.0`)
+## Ecosystem & Cross-Platform Distribution
 
-1. Run `npm publish --access public` manually with 2FA to claim `@digital-lake/modelcanon` on npm.
-2. Link `.github/workflows/release.yml` as an npm OIDC Trusted Publisher within 48 hours.
-3. Configure PyPI Pending Publisher for `modelcanon-mcp` pointing to `digital-lake-ai/modelcanon` (`release.yml`, environment `Digital-Lake-ModelCanon`).
-4. Run `mcp-publisher login github && mcp-publisher publish` for `server.json` (`io.github.digital-lake-ai/modelcanon`).
-5. Claim the repository on Glama (`glama.json` + `Dockerfile`) and Smithery (`smithery.yaml`).
+| Surface | Identifier / Scope | Platform Coverage |
+| :--- | :--- | :--- |
+| **npm Registry** | [`@digital-lake/modelcanon`](https://www.npmjs.com/package/@digital-lake/modelcanon) (`npx`) | **Linux**, **macOS**, **Windows** (`linux`, `darwin`, `win32`) |
+| **PyPI Registry** | [`modelcanon-mcp`](https://pypi.org/project/modelcanon-mcp/) (`uvx` / `pip`, OIDC attested) | **Linux**, **macOS**, **Windows** (`shell=False`) |
+| **Official MCP Registry** | `io.github.digital-lake-ai/modelcanon` (`server.json`) | Verified (`github-oidc` + Sigstore `cosign`) |
+| **CI Matrix & CodeQL** | GitHub Actions (`ci.yml`, `codeql.yml`, `dependabot.yml`) | `ubuntu-latest`, `macos-latest`, `windows-latest` |
+| **Container Runtime** | Non-root multi-stage `Dockerfile` (`node:22-alpine`) | OCI Linux containers (`USER node`, offline fallback enabled) |
 
 ## Security & Supply-Chain Guarantees
 
 - **HTTPS-Only Ingestion:** Rejects non-HTTPS URLs, blocks `https` to `http` downgrade redirects, limits response sizes (`maxBytes`), and strips sensitive headers across cross-origin redirects.
-- **Zero Shell Execution:** Subprocesses and `uvx` wrappers execute strictly with `shell: false` / `shell=False`.
+- **Zero Shell Execution:** Subprocesses and `uvx` wrappers execute strictly with `shell: false` / `shell=False` (`npx.cmd` resolved safely on Windows via `shutil.which`).
 - **Read-Only MCP Contracts:** All tools declare `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `outputSchema`, and `structuredContent`.
 - **No Secret Persistence:** Optional provider API keys remain strictly in memory (`x-goog-api-key` header for Gemini, never query strings).
-- **Automated Supply-Chain Controls:** Published with npm SLSA Provenance (OIDC), PyPI Trusted Publishing, CodeQL (`javascript-typescript` & `python`), and Dependabot.
+- **Automated Supply-Chain Controls:** Published with npm OIDC Provenance, PyPI Trusted Publishing, Official MCP Registry OIDC, CodeQL (`javascript-typescript` & `python`), Socket Security, and Dependabot.
+
+---
+
+## Provenance & Maintainers
+
+**ModelCanon** is designed, engineered, and maintained by **[HorchataHTML](https://github.com/HorchataHTML)** and **[Digital Lake](https://github.com/digital-lake-ai)**.
+
+---
 
 ## License
 
-MIT — see [LICENSE](./LICENSE) and [NOTICE.md](./NOTICE.md).
+ModelCanon is released under the [MIT License](https://github.com/digital-lake-ai/modelcanon/blob/main/LICENSE) and [NOTICE.md](https://github.com/digital-lake-ai/modelcanon/blob/main/NOTICE.md).  
+Copyright (c) 2026 HorchataHTML (https://github.com/HorchataHTML)  
+Copyright (c) 2026 Digital Lake (https://github.com/digital-lake-ai) and ModelCanon contributors.
