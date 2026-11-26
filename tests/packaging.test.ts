@@ -83,6 +83,7 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
 
     const releaseYml = readFileSync(resolve(ROOT, ".github/workflows/release.yml"), "utf8");
     expect(existsSync(resolve(ROOT, "scripts/publish-release.mjs"))).toBe(true);
+    expect(releaseYml).toContain("npm install -g npm@latest");
     expect(releaseYml).toContain('npm view "@digital-lake/modelcanon@$' + '{VERSION}"');
     expect(releaseYml).toContain('echo "new_version=$' + '{new_version}" >> "$' + 'GITHUB_OUTPUT"');
     expect(releaseYml).toContain("mcp-publisher login github-oidc");

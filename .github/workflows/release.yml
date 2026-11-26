@@ -58,6 +58,10 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Upgrade npm CLI to latest (>= 11.5.1 required for tokenless OIDC)
+        if: steps.detect.outputs.should_release == 'true'
+        run: npm install -g npm@latest && npm --version
+
       - name: Install dependencies & verify
         if: steps.detect.outputs.should_release == 'true'
         env:
