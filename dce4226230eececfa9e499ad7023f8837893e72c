@@ -1,0 +1,30 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T12:05:34.008Z",
+  "issue": {
+    "id": 12,
+    "title": "docs(seo): align AI-SEO hero header, multi-platform metadata, and author attribution",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T1",
+    "title": "Upgrade AI-SEO hero header, multi-platform docs, and copyright attribution",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "README.md",
+        "LICENSE",
+        "NOTICE.md",
+        "llms.txt"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
