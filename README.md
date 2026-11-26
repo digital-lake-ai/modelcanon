@@ -117,6 +117,14 @@ Yes. Every release ships a verified `data/seed.json` snapshot and falls back aut
 4. Run `mcp-publisher login github && mcp-publisher publish` for `server.json` (`io.github.digital-lake-ai/modelcanon`).
 5. Claim the repository on Glama (`glama.json` + `Dockerfile`) and Smithery (`smithery.yaml`).
 
+## Security & Supply-Chain Guarantees
+
+- **HTTPS-Only Ingestion:** Rejects non-HTTPS URLs, blocks `https` to `http` downgrade redirects, limits response sizes (`maxBytes`), and strips sensitive headers across cross-origin redirects.
+- **Zero Shell Execution:** Subprocesses and `uvx` wrappers execute strictly with `shell: false` / `shell=False`.
+- **Read-Only MCP Contracts:** All tools declare `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `outputSchema`, and `structuredContent`.
+- **No Secret Persistence:** Optional provider API keys remain strictly in memory (`x-goog-api-key` header for Gemini, never query strings).
+- **Automated Supply-Chain Controls:** Published with npm SLSA Provenance (OIDC), PyPI Trusted Publishing, CodeQL (`javascript-typescript` & `python`), and Dependabot.
+
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE) and [NOTICE.md](./NOTICE.md).

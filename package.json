@@ -54,6 +54,7 @@
     "server.json",
     "README.md",
     "LICENSE",
+    "NOTICE.md",
     "llms.txt"
   ],
   "os": [

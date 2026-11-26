@@ -58,8 +58,54 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
 
     const releaseYml = readFileSync(resolve(ROOT, ".github/workflows/release.yml"), "utf8");
     expect(existsSync(resolve(ROOT, "scripts/publish-release.mjs"))).toBe(true);
-    expect(releaseYml).toContain('npm view "@digital-lake/modelcanon@${VERSION}"');
+    expect(releaseYml).toContain('npm view "@digital-lake/modelcanon@$' + '{VERSION}"');
     expect(releaseYml).toContain("mcp-publisher login github-oidc");
     expect(String(readJson("server.json").description).length).toBeLessThanOrEqual(100);
+  });
+
+  it("enforces strict English-only tracked files, zero docs/contexto history, and Triple-A security hygiene", () => {
+    for (const requiredFile of [
+      "SECURITY.md",
+      "CONTRIBUTING.md",
+      "CODE_OF_CONDUCT.md",
+      "NOTICE.md",
+      ".github/ISSUE_TEMPLATE/bug-report.yml",
+      ".github/ISSUE_TEMPLATE/model-discrepancy.yml",
+    ]) {
+      expect(existsSync(resolve(ROOT, requiredFile))).toBe(true);
+    }
+
+    const tracked = execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8" })
+      .split(/\r?\n/)
+      .filter(Boolean);
+
+    expect(tracked.some((f) => f.startsWith("docs/contexto/"))).toBe(false);
+
+    const spanishChars =
+      /[\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00c1\u00c9\u00cd\u00d3\u00da\u00d1\u00bf\u00a1]/;
+    const forbiddenEmail = `${"@"}digital-lake.ai`;
+    for (const relPath of tracked) {
+      if (relPath === "package-lock.json" || relPath === "data/seed.json") continue;
+      const content = readFileSync(resolve(ROOT, relPath), "utf8");
+      expect(spanishChars.test(content), `Spanish character found in ${relPath}`).toBe(false);
+      expect(content, `Placeholder email found in ${relPath}`).not.toContain(forbiddenEmail);
+    }
+
+    for (const wf of [
+      ".github/workflows/ci.yml",
+      ".github/workflows/codeql.yml",
+      ".github/workflows/release.yml",
+    ]) {
+      const yml = readFileSync(resolve(ROOT, wf), "utf8");
+      expect(yml, `${wf} must declare permissions`).toContain("permissions:");
+    }
+
+    for (const relPath of tracked.filter(
+      (f) => f.startsWith("src/") || f.startsWith("scripts/") || f.startsWith("python/"),
+    )) {
+      const code = readFileSync(resolve(ROOT, relPath), "utf8");
+      expect(code, `Unsafe shell: true in ${relPath}`).not.toContain("shell: true");
+      expect(code, `Unsafe cmd.exe in ${relPath}`).not.toContain("cmd.exe");
+    }
   });
 });
