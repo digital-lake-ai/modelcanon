@@ -1,0 +1,28 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T12:57:49.117Z",
+  "issue": {
+    "id": 16,
+    "title": "fix(ci): upgrade npm CLI to >=11.5.1 for tokenless OIDC publishing in release.yml",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T1",
+    "title": "Upgrade npm CLI in release.yml for tokenless OIDC Trusted Publishing",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        ".github/workflows/release.yml",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
