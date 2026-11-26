@@ -1,0 +1,36 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T09:30:12.897Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T9",
+    "title": "Harden HTTPS redirects, API key headers, and CodeQL sanitization",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/http/fetcher.ts",
+        "src/enrichers/native-models.ts",
+        "src/enrichers/litellm.ts",
+        "src/registry/providers.ts",
+        "src/providers/deepseek.ts",
+        "src/providers/claude.ts",
+        "tests/ingest.test.ts",
+        "tests/providers.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm run build && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
