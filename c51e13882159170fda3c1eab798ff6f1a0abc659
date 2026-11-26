@@ -1,0 +1,31 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T12:52:08.711Z",
+  "issue": {
+    "id": 14,
+    "title": "chore(release): bump version to 0.1.1 for OIDC SLSA provenance and registry parity",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T1",
+    "title": "Prepare CHANGELOG 0.1.1, llms.txt, issue template, and runtime headers",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "CHANGELOG.md",
+        "llms.txt",
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        "src/mcp/server.ts",
+        "src/http/fetcher.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
