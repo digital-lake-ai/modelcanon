@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modelcanon-mcp"
+version = "0.1.0"
+description = "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Gemini, Claude, OpenAI, DeepSeek, and Kimi."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+  { name = "HorchataHTML (Digital Lake)" }
+]
+keywords = ["mcp", "mcp-server", "ai-models", "deprecations", "changelog", "llm"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/digital-lake-ai/modelcanon#readme"
+Repository = "https://github.com/digital-lake-ai/modelcanon"
+Issues = "https://github.com/digital-lake-ai/modelcanon/issues"
+
+[project.scripts]
+modelcanon-mcp = "modelcanon_mcp:main_mcp"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["modelcanon_mcp*"]

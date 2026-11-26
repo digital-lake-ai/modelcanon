@@ -1,0 +1,78 @@
+{
+  "name": "@digital-lake/modelcanon",
+  "version": "0.1.0",
+  "mcpName": "io.github.digital-lake-ai/modelcanon",
+  "description": "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi.",
+  "type": "module",
+  "bin": {
+    "modelcanon": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "seed:build": "npm run build && node scripts/build-seed.mjs",
+    "seed:check": "node scripts/build-seed.mjs --check",
+    "version:check": "node scripts/sync-version.mjs --check",
+    "version:sync": "node scripts/sync-version.mjs",
+    "publish:preflight": "node scripts/publish-release.mjs --preflight",
+    "prepublishOnly": "npm run build && npm run seed:check && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "ai-model-updates",
+    "llm-changelog",
+    "model-deprecations",
+    "gemini-api",
+    "claude-api",
+    "openai-api",
+    "deepseek",
+    "kimi-ai",
+    "digital-lake"
+  ],
+  "author": {
+    "name": "HorchataHTML (Digital Lake)",
+    "url": "https://github.com/digital-lake-ai"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digital-lake-ai/modelcanon.git"
+  },
+  "homepage": "https://github.com/digital-lake-ai/modelcanon#readme",
+  "bugs": {
+    "url": "https://github.com/digital-lake-ai/modelcanon/issues"
+  },
+  "files": [
+    "dist",
+    "data",
+    "server.json",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md",
+    "llms.txt"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.9",
+    "@types/node": "^26.6.11",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.2"
+  }
+}

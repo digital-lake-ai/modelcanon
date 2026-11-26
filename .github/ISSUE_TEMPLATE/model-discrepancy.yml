@@ -1,0 +1,38 @@
+name: Model Catalog Discrepancy
+description: Report an outdated shutdown date, missing model ID, or changed API constraint
+title: "[Catalog]: "
+labels: ["catalog"]
+body:
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - gemini
+        - claude
+        - openai
+        - deepseek
+        - kimi
+    validations:
+      required: true
+  - type: input
+    id: model_id
+    attributes:
+      label: Model Identifier
+      placeholder: "claude-sonnet-4-5"
+    validations:
+      required: true
+  - type: input
+    id: official_url
+    attributes:
+      label: Official Primary Documentation URL
+      placeholder: "https://platform.claude.com/docs/en/about-claude/model-deprecations"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Expected vs Actual Output
+      description: Share what `audit_model_id` returned and what the official documentation states.
+    validations:
+      required: true

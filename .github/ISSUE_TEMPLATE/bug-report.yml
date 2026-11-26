@@ -1,0 +1,36 @@
+name: Bug Report
+description: Report a defect in @digital-lake/modelcanon or modelcanon-mcp
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue in ModelCanon. Do not paste API keys or private credentials.
+  - type: input
+    id: version
+    attributes:
+      label: ModelCanon Version
+      description: Output of `npx @digital-lake/modelcanon --version`
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime & OS
+      options:
+        - Node.js (npx) on Linux
+        - Node.js (npx) on macOS
+        - Node.js (npx) on Windows
+        - Python (uvx)
+        - Docker
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Describe the MCP tool call or CLI command and the unexpected result.
+    validations:
+      required: true

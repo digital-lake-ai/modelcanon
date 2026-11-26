@@ -8,6 +8,17 @@
 .lognexus/update-check.json
 .lognexus/terms-consent.json
 
+# Node / Python / Build artifacts
+node_modules/
+dist/
+dist-pypi/
+build/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+coverage/
+.DS_Store
+
 # Internal context & secrets
 docs/contexto/
 .env
