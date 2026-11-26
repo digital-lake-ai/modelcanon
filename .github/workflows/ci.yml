@@ -20,10 +20,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "npm"
@@ -39,6 +39,9 @@ jobs:
 
       - name: Build TypeScript
         run: npm run build
+
+      - name: Verify CLI binary execution
+        run: node dist/cli.js --version
 
       - name: Verify bundled seed snapshot
         run: npm run seed:check

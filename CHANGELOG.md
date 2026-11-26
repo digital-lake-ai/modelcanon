@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-11-26
+
+### Changed
+- **Glama & SLSA Provenance Verification:** Added official Glama MCP Directory (`score.svg` & `card.svg`), Sigstore SLSA OIDC Provenance, Socket Security, and TDQS Grade A badges and audit matrix to `README.md`.
+- **GitHub Actions Modernization (`@v7` / `@v4`):** Upgraded `actions/checkout@v7`, `actions/setup-node@v7`, `actions/setup-python@v7`, `github/codeql-action@v4`, and `sigstore/cosign-installer@v4.1.3` across `ci.yml`, `codeql.yml`, and `release.yml`, superseding Dependabot PRs `#6`–`#9` and adding automatic npm CDN propagation retries for `mcp-publisher`.
+- **Container OCI Version Metadata:** Added `org.opencontainers.image.version` to `Dockerfile` and triggered Glama `Auto-Release` synchronization at `0.1.2`.
+
 ## [0.1.1] - 2026-11-26
 
 ### Changed

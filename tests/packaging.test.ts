@@ -10,14 +10,14 @@ function readJson(relPath: string): Record<string, unknown> {
 }
 
 describe("Multiplatform packaging, version parity, and registry manifests", () => {
-  it("aligns server.json, package.json, glama.json, smithery.yaml, and Dockerfile at 0.1.1", () => {
+  it("aligns server.json, package.json, glama.json, smithery.yaml, and Dockerfile at 0.1.2", () => {
     const pkg = readJson("package.json");
     const server = readJson("server.json");
     const glama = readJson("glama.json");
     const smithery = readFileSync(resolve(ROOT, "smithery.yaml"), "utf8");
 
     expect(pkg.name).toBe("@digital-lake/modelcanon");
-    expect(pkg.version).toBe("0.1.1");
+    expect(pkg.version).toBe("0.1.2");
     expect(pkg.mcpName).toBe("io.github.digital-lake-ai/modelcanon");
     expect(pkg.os).toEqual(["darwin", "linux", "win32"]);
     expect(pkg.keywords).toEqual(
@@ -39,23 +39,24 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
     const pyMain = readFileSync(resolve(ROOT, "python/modelcanon_mcp/__main__.py"), "utf8");
 
     expect(pyproject).toContain('name = "modelcanon-mcp"');
-    expect(pyproject).toContain('version = "0.1.1"');
+    expect(pyproject).toContain('version = "0.1.2"');
     expect(pyproject).toContain('"Operating System :: MacOS"');
     expect(pyproject).toContain('"Operating System :: Microsoft :: Windows"');
     expect(pyproject).toContain('"Operating System :: POSIX :: Linux"');
     expect(pyproject).toContain("HorchataHTML");
     expect(pyproject).toContain("Digital Lake");
-    expect(pyInit).toContain('__version__ = "0.1.1"');
+    expect(pyInit).toContain('__version__ = "0.1.2"');
     expect(pyInit).toContain('"npx.cmd"');
     expect(pyInit).toContain("shell=False");
     expect(pyMain).toContain("main_mcp()");
   });
 
-  it("includes MCP registry ownership comment, docs, and passes version:check", () => {
+  it("includes MCP registry ownership comment, Glama badge, docs, and passes version:check", () => {
     const readme = readFileSync(resolve(ROOT, "README.md"), "utf8");
     const license = readFileSync(resolve(ROOT, "LICENSE"), "utf8");
     const notice = readFileSync(resolve(ROOT, "NOTICE.md"), "utf8");
     expect(readme.startsWith("<!-- mcp-name: io.github.digital-lake-ai/modelcanon -->")).toBe(true);
+    expect(readme).toContain("https://glama.ai/mcp/servers/digital-lake-ai/modelcanon");
     expect(readme).toContain("**Linux**, **macOS**, and **Windows**");
     expect(readme).toContain("Copyright (c) 2026 HorchataHTML (https://github.com/HorchataHTML)");
     expect(readme).toContain(
@@ -79,10 +80,11 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
         encoding: "utf8",
       },
     );
-    expect(out).toContain("0.1.1");
+    expect(out).toContain("0.1.2");
 
     const releaseYml = readFileSync(resolve(ROOT, ".github/workflows/release.yml"), "utf8");
     expect(existsSync(resolve(ROOT, "scripts/publish-release.mjs"))).toBe(true);
+    expect(releaseYml).toContain("actions/checkout@v7");
     expect(releaseYml).toContain("npm install -g npm@latest");
     expect(releaseYml).toContain('npm view "@digital-lake/modelcanon@$' + '{VERSION}"');
     expect(releaseYml).toContain('echo "new_version=$' + '{new_version}" >> "$' + 'GITHUB_OUTPUT"');

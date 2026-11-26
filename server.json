@@ -7,13 +7,13 @@
     "url": "https://github.com/digital-lake-ai/modelcanon",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "websiteUrl": "https://github.com/digital-lake-ai/modelcanon#readme",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@digital-lake/modelcanon",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio"
       },
@@ -22,7 +22,7 @@
     {
       "registryType": "pypi",
       "identifier": "modelcanon-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio"
       },

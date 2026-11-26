@@ -13,10 +13,16 @@
 [![CI](https://github.com/digital-lake-ai/modelcanon/actions/workflows/ci.yml/badge.svg)](https://github.com/digital-lake-ai/modelcanon/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/digital-lake-ai/modelcanon/actions/workflows/codeql.yml/badge.svg)](https://github.com/digital-lake-ai/modelcanon/actions/workflows/codeql.yml)
 [![npm version](https://img.shields.io/npm/v/@digital-lake/modelcanon?color=0969da&logo=npm&label=npm)](https://www.npmjs.com/package/@digital-lake/modelcanon)
+[![npm downloads](https://img.shields.io/npm/dm/@digital-lake/modelcanon?color=cb3837&logo=npm&label=npm%20downloads)](https://www.npmjs.com/package/@digital-lake/modelcanon)
 [![PyPI version](https://img.shields.io/pypi/v/modelcanon-mcp?color=3775a9&logo=pypi&logoColor=white&label=pypi)](https://pypi.org/project/modelcanon-mcp/)
+[![PyPI downloads](https://img.shields.io/pypi/dw/modelcanon-mcp?color=3775a9&logo=pypi&logoColor=white&label=pypi%20downloads)](https://pypi.org/project/modelcanon-mcp/)
+[![ModelCanon MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/digital-lake-ai/modelcanon/badges/score.svg)](https://glama.ai/mcp/servers/digital-lake-ai/modelcanon)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-0d9488)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.digital-lake-ai/modelcanon)
 [![Organization](https://img.shields.io/badge/org-Digital_Lake-7c3aed)](https://github.com/digital-lake-ai)
 
+[![SLSA Provenance](https://img.shields.io/badge/SLSA_Provenance-Verified_OIDC-2ea44f?logo=sigstore&logoColor=white)](https://www.npmjs.com/package/@digital-lake/modelcanon)
+[![Socket Security](https://img.shields.io/badge/Socket_Audit-0_CVEs-2ea44f?logo=socketdotdev&logoColor=white)](https://socket.dev/npm/package/@digital-lake/modelcanon)
+[![MCP TDQS](https://img.shields.io/badge/MCP_TDQS-Grade_A-0d9488)](https://glama.ai/mcp/servers/digital-lake-ai/modelcanon)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript&logoColor=white)](https://github.com/digital-lake-ai/modelcanon)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20_LTS-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![Python](https://img.shields.io/badge/Python-%3E%3D3.10_(uvx)-3775a9?logo=python&logoColor=white)](https://pypi.org/project/modelcanon-mcp/)
@@ -173,14 +179,23 @@ Yes. Every commit is tested on `ubuntu-latest`, `macos-latest`, and `windows-lat
 
 ---
 
-## Ecosystem & Cross-Platform Distribution
+## Verified Quality & Ecosystem Distribution
 
-| Surface | Identifier / Scope | Platform Coverage |
+<div align="center">
+
+[![ModelCanon MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/digital-lake-ai/modelcanon/badges/card.svg)](https://glama.ai/mcp/servers/digital-lake-ai/modelcanon)
+
+</div>
+
+| Surface / Auditor | Identifier / Scope | Verified Status & Platform Coverage |
 | :--- | :--- | :--- |
+| **Glama MCP Directory** | [`digital-lake-ai/modelcanon`](https://glama.ai/mcp/servers/digital-lake-ai/modelcanon) | **Official** · License `A` · Quality `A` · Server Coherence `A` · TDQS `Grade A` (**Linux**, **macOS**, **Windows**) |
+| **SLSA Provenance** | Sigstore & GitHub Actions OIDC (`--provenance`) | **Verified** (`slsa.dev/provenance/v1`, 2 public maintainers) |
+| **Socket Security** | Supply-chain & vulnerability audit | **0 CVEs** · Zero shell execution (`shell: false`) |
 | **npm Registry** | [`@digital-lake/modelcanon`](https://www.npmjs.com/package/@digital-lake/modelcanon) (`npx`) | **Linux**, **macOS**, **Windows** (`linux`, `darwin`, `win32`) |
 | **PyPI Registry** | [`modelcanon-mcp`](https://pypi.org/project/modelcanon-mcp/) (`uvx` / `pip`, OIDC attested) | **Linux**, **macOS**, **Windows** (`shell=False`) |
-| **Official MCP Registry** | `io.github.digital-lake-ai/modelcanon` (`server.json`) | Verified (`github-oidc` + Sigstore `cosign`) |
-| **CI Matrix & CodeQL** | GitHub Actions (`ci.yml`, `codeql.yml`, `dependabot.yml`) | `ubuntu-latest`, `macos-latest`, `windows-latest` |
+| **Official MCP Registry** | `io.github.digital-lake-ai/modelcanon` (`server.json`) | **Active** (`github-oidc` + Sigstore `cosign`) |
+| **CI Matrix & CodeQL** | GitHub Actions (`ci.yml`, `codeql.yml`, `dependabot.yml`) | `ubuntu-latest`, `macos-latest`, `windows-latest` (`@v7` / `@v4`) |
 | **Container Runtime** | Non-root multi-stage `Dockerfile` (`node:22-alpine`) | OCI Linux containers (`USER node`, offline fallback enabled) |
 
 ## Security & Supply-Chain Guarantees
