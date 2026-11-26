@@ -7,7 +7,7 @@ import subprocess
 import sys
 from typing import Sequence
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 NPM_PACKAGE = f"@digital-lake/modelcanon@{__version__}"
 
 

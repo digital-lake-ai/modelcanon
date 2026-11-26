@@ -28,6 +28,16 @@ function extractCliVersion(content) {
   return match?.[1] ?? null;
 }
 
+function extractMcpServerVersion(content) {
+  const match = /export const MCP_SERVER_VERSION = "([^"]+)";/m.exec(content);
+  return match?.[1] ?? null;
+}
+
+function extractFetcherVersion(content) {
+  const match = /"User-Agent":\s*"ModelCanon\/([^"\s]+)\s+/m.exec(content);
+  return match?.[1] ?? null;
+}
+
 function readVersionSurfaces() {
   const pkg = readJson("package.json");
   const lock = readJson("package-lock.json");
@@ -35,6 +45,8 @@ function readVersionSurfaces() {
   const pyproject = readFileSync(resolve(ROOT_DIR, "pyproject.toml"), "utf8");
   const pyInit = readFileSync(resolve(ROOT_DIR, "python/modelcanon_mcp/__init__.py"), "utf8");
   const cli = readFileSync(resolve(ROOT_DIR, "src/cli.ts"), "utf8");
+  const mcpServer = readFileSync(resolve(ROOT_DIR, "src/mcp/server.ts"), "utf8");
+  const fetcher = readFileSync(resolve(ROOT_DIR, "src/http/fetcher.ts"), "utf8");
 
   return {
     "package.json": pkg.version ?? null,
@@ -47,6 +59,8 @@ function readVersionSurfaces() {
     "pyproject.toml": extractPyprojectVersion(pyproject),
     "python/modelcanon_mcp/__init__.py": extractPythonInitVersion(pyInit),
     "src/cli.ts": extractCliVersion(cli),
+    "src/mcp/server.ts": extractMcpServerVersion(mcpServer),
+    "src/http/fetcher.ts": extractFetcherVersion(fetcher),
   };
 }
 
@@ -75,7 +89,7 @@ function checkVersionParity() {
     throw new Error(`Version parity check failed:\n- ${mismatches.join("\n- ")}`);
   }
 
-  process.stdout.write(`[OK] All 6 version surfaces match ${target}.\n`);
+  process.stdout.write(`[OK] All 8 version surfaces match ${target}.\n`);
 }
 
 function syncVersions(targetVersion) {
@@ -126,7 +140,23 @@ function syncVersions(targetVersion) {
     "utf8",
   );
 
-  process.stdout.write(`[OK] Synchronized all 6 surfaces to ${targetVersion}.\n`);
+  const mcpServerPath = resolve(ROOT_DIR, "src/mcp/server.ts");
+  const mcpServer = readFileSync(mcpServerPath, "utf8");
+  writeFileSync(
+    mcpServerPath,
+    mcpServer.replace(/(export const MCP_SERVER_VERSION = ")[^"]+(";)/m, `$1${targetVersion}$2`),
+    "utf8",
+  );
+
+  const fetcherPath = resolve(ROOT_DIR, "src/http/fetcher.ts");
+  const fetcher = readFileSync(fetcherPath, "utf8");
+  writeFileSync(
+    fetcherPath,
+    fetcher.replace(/("User-Agent":\s*"ModelCanon\/)[^"\s]+(\s+)/m, `$1${targetVersion}$2`),
+    "utf8",
+  );
+
+  process.stdout.write(`[OK] Synchronized all 8 surfaces to ${targetVersion}.\n`);
 }
 
 const args = process.argv.slice(2);
