@@ -1,0 +1,18 @@
+{
+  "sample_spec": {
+    "litellm_provider": "openai"
+  },
+  "gpt-4.1-2025-04-14": {
+    "litellm_provider": "openai",
+    "max_input_tokens": 1047576,
+    "max_output_tokens": 32768,
+    "input_cost_per_token": 0.000002,
+    "output_cost_per_token": 0.000008,
+    "deprecation_date": "2027-01-14",
+    "supports_function_calling": true
+  },
+  "azure/gpt-4.1": {
+    "litellm_provider": "azure",
+    "max_input_tokens": 1047576
+  }
+}

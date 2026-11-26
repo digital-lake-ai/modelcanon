@@ -1,0 +1,26 @@
+{
+  "anthropic": {
+    "doc": "https://platform.claude.com/docs/en/about-claude/models",
+    "models": {
+      "claude-opus-5-5": {
+        "id": "claude-opus-5-5",
+        "name": "Claude Opus 5.5",
+        "reasoning": true,
+        "tool_call": true,
+        "temperature": false,
+        "cost": { "input": 15, "output": 75 },
+        "limit": { "context": 1000000, "output": 128000 },
+        "canonical_model_id": "anthropic/claude-opus-5-5"
+      }
+    }
+  },
+  "ignored_extra_provider": {
+    "doc": "https://example.com/ignored",
+    "models": {
+      "some-third-party-model": {
+        "id": "some-third-party-model",
+        "limit": { "context": 32000, "output": 4096 }
+      }
+    }
+  }
+}
