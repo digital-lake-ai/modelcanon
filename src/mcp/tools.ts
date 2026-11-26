@@ -19,7 +19,7 @@ const AuditModelInputShape = {
     .string()
     .min(1)
     .describe(
-      "AI model identifier to inspect (e.g., 'claude-opus-5-5', 'gemini-2.5-pro', 'gpt-4.1').",
+      "AI model identifier to inspect, with or without vendor prefix or date suffix (examples: 'claude-opus-5-5', 'anthropic/claude-sonnet-4-5', 'gemini-2.5-pro', 'gpt-4.1').",
     ),
 };
 
@@ -46,25 +46,29 @@ const LatestUpdatesInputShape = {
   provider: z
     .enum(["all", "gemini", "claude", "openai", "deepseek", "kimi"])
     .optional()
-    .describe("Filter updates by provider or 'all' (default: 'all')."),
+    .describe(
+      "Filter updates by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi') or 'all' (default: 'all').",
+    ),
   days: z
     .number()
     .int()
     .positive()
     .max(365)
     .optional()
-    .describe("Only include updates published within the last N days."),
+    .describe("Only include updates published within the last N days (1-365; example: 30)."),
   category: z
     .enum(["all", "new_model", "deprecation", "breaking_change", "pricing"])
     .optional()
-    .describe("Filter updates by category or 'all' (default: 'all')."),
+    .describe(
+      "Filter updates by event category ('new_model', 'deprecation', 'breaking_change', 'pricing') or 'all' (default: 'all').",
+    ),
   limit: z
     .number()
     .int()
     .positive()
     .max(50)
     .optional()
-    .describe("Maximum number of compact update entries to return (default: 15)."),
+    .describe("Maximum number of compact update entries to return (1-50; default: 15)."),
 };
 
 const LatestUpdatesOutputShape = {
@@ -90,18 +94,22 @@ const ListActiveModelsInputShape = {
   provider: z
     .enum(["all", "gemini", "claude", "openai", "deepseek", "kimi"])
     .optional()
-    .describe("Filter active models by provider or 'all' (default: 'all')."),
+    .describe(
+      "Filter active models by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi') or 'all' (default: 'all').",
+    ),
   include_deprecated: z
     .boolean()
     .optional()
-    .describe("Include models marked deprecated alongside active models (default: false)."),
+    .describe(
+      "Include models with status 'deprecated' alongside 'active' models (default: false).",
+    ),
   limit: z
     .number()
     .int()
     .positive()
     .max(200)
     .optional()
-    .describe("Maximum number of models to return (default: 50)."),
+    .describe("Maximum number of models to return (1-200; default: 50)."),
 };
 
 const ListActiveModelsOutputShape = {
@@ -136,9 +144,9 @@ export function registerModelCanonTools(
   server.registerTool(
     "audit_model_id",
     {
-      title: "Audit AI Model ID",
+      title: "ModelCanon Audit: Verify model lifecycle status, shutdown date and replacement",
       description:
-        "Inspect lifecycle status, shutdown countdown, official replacement ID, parameter constraints, and context limits for a specific AI model identifier across Gemini, Claude, OpenAI, DeepSeek, and Kimi. Use when validating or updating a model ID in code or config. Not for listing all available models (use list_active_models) or browsing recent announcements (use get_latest_updates).",
+        "Inspect lifecycle status ('active', 'deprecated', 'retired', or 'unknown'), UTC days until shutdown, official replacement ID, parameter constraints, and context limits for a specific AI model identifier across Gemini, Claude, OpenAI, DeepSeek, and Kimi. Use when validating or updating a model ID in code or config. Not for listing all available models (use list_active_models) or browsing recent announcements (use get_latest_updates). Read-only and idempotent: requires no API keys, serves from local cache or bundled offline seed with stale=true when offline, and returns status='unknown' for unrecognized IDs.",
       inputSchema: AuditModelInputShape,
       outputSchema: AuditModelOutputShape,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -156,9 +164,9 @@ export function registerModelCanonTools(
   server.registerTool(
     "get_latest_updates",
     {
-      title: "Get Latest Model Updates",
+      title: "ModelCanon Updates: Retrieve cited changelog and deprecation events",
       description:
-        "Return compact, cited official changelog and deprecation events filtered by provider, category, or recency window. Use when checking recent releases, breaking API changes, or upcoming retirements. Not for auditing one specific model ID (use audit_model_id) or fetching full pricing tables (use list_active_models).",
+        "Return compact, cited official changelog and deprecation events filtered by provider, category, or recency window. Use when checking recent model releases, breaking API changes, or upcoming retirements. Not for auditing one specific model ID (use audit_model_id) or fetching full pricing tables (use list_active_models). Read-only and idempotent: requires no API keys and falls back to the bundled offline seed with stale=true if upstream sources are unreachable.",
       inputSchema: LatestUpdatesInputShape,
       outputSchema: LatestUpdatesOutputShape,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -176,9 +184,9 @@ export function registerModelCanonTools(
   server.registerTool(
     "list_active_models",
     {
-      title: "List Active AI Models",
+      title: "ModelCanon Catalog: List active models, context limits and token pricing",
       description:
-        "List currently active (and optionally deprecated) model identifiers with context windows, output token limits, temperature support, and USD pricing per 1M tokens. Use when selecting a current model or comparing provider specs. Not for reading changelog prose (use get_latest_updates).",
+        "List currently active (and optionally deprecated) model identifiers with context windows, output token limits, temperature support, and USD pricing per 1M tokens. Use when selecting a current model or comparing provider capabilities. Not for reading changelog prose (use get_latest_updates) or checking retirement dates of a single ID (use audit_model_id). Read-only and idempotent: requires no API keys and falls back cleanly to the bundled offline seed when offline.",
       inputSchema: ListActiveModelsInputShape,
       outputSchema: ListActiveModelsOutputShape,
       annotations: READ_ONLY_ANNOTATIONS,

@@ -1,15 +1,25 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const REPO_SLUG = "digital-lake-ai/modelcanon";
 const ENVIRONMENT_NAME = "Digital-Lake-ModelCanon";
 
-function isCmdShim(bin) {
-  return process.platform === "win32" && (bin === "npm" || bin === "npx");
+function resolveNpmCliScript(scriptName) {
+  const execDir = dirname(process.execPath);
+  const candidates = [
+    join(execDir, "node_modules", "npm", "bin", scriptName),
+    join(execDir, "..", "lib", "node_modules", "npm", "bin", scriptName),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 function runCommand(bin, args, options = {}) {
@@ -17,19 +27,24 @@ function runCommand(bin, args, options = {}) {
   const capture = options.capture ?? false;
   const stdio = capture ? ["ignore", "pipe", "pipe"] : "inherit";
 
-  if (isCmdShim(bin)) {
-    return execFileSync("cmd.exe", ["/d", "/s", "/c", `${bin}.cmd`, ...args], {
-      cwd,
-      encoding: "utf8",
-      stdio,
-      env: options.env ?? process.env,
-    });
+  if (bin === "npm" || bin === "npx") {
+    const cliJs = resolveNpmCliScript(bin === "npm" ? "npm-cli.js" : "npx-cli.js");
+    if (cliJs !== null) {
+      return execFileSync(process.execPath, [cliJs, ...args], {
+        cwd,
+        encoding: "utf8",
+        stdio,
+        shell: false,
+        env: options.env ?? process.env,
+      });
+    }
   }
 
   return execFileSync(bin, args, {
     cwd,
     encoding: "utf8",
     stdio,
+    shell: false,
     env: options.env ?? process.env,
   });
 }
@@ -250,6 +265,49 @@ function runGithubBootstrap() {
   process.stdout.write("[OK] GitHub repository, environment, notes, and PR ready.\n");
 }
 
+function runSeedRoadmap() {
+  const existing = JSON.parse(
+    runCommand("gh", ["issue", "list", "--repo", REPO_SLUG, "--state", "all", "--json", "title"], {
+      capture: true,
+    }),
+  );
+  const existingTitles = new Set(existing.map((item) => item.title));
+
+  const roadmapItems = [
+    {
+      title: "feat(transport): add Streamable HTTP transport alongside stdio",
+      body: "Track optional Streamable HTTP server support for remote MCP deployments while preserving zero-config stdio as the default.",
+      reply:
+        "Triaged for v0.2.0. The @modelcontextprotocol/sdk dependency is already bundled, so adding an HTTP entrypoint will stay isolated from stdio.",
+    },
+    {
+      title: "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+      body: "Assess adding dedicated official documentation adapters for additional model families once primary machine-readable feeds are verified.",
+      reply:
+        "Triaged for v0.2.x. New adapters will plug into the modular ProviderAdapter registry without breaking the 5 core providers.",
+    },
+    {
+      title: "chore(ci): add scheduled weekly seed snapshot verification workflow",
+      body: "Monitor upstream provider Markdown and RSS endpoints weekly so schema drift in official changelogs is detected early.",
+      reply:
+        "Triaged for v0.1.x maintenance. Will run build-seed dry checks on schedule and open an automated alert on upstream format changes.",
+    },
+  ];
+
+  for (const item of roadmapItems) {
+    if (existingTitles.has(item.title)) {
+      continue;
+    }
+    const issueUrl = runCommand(
+      "gh",
+      ["issue", "create", "--repo", REPO_SLUG, "--title", item.title, "--body", item.body],
+      { capture: true },
+    ).trim();
+    runCommand("gh", ["issue", "comment", issueUrl, "--body", item.reply]);
+    process.stdout.write(`[OK] Created & triaged roadmap issue: ${issueUrl}\n`);
+  }
+}
+
 function runNpmInitial() {
   const whoami = tryCommand("npm", ["whoami"]);
   if (!whoami.ok) {
@@ -304,6 +362,7 @@ function printUsage() {
       "Usage:",
       "  node scripts/publish-release.mjs --preflight         Verify builds, tarballs, wheels, and auth",
       "  node scripts/publish-release.mjs --github-bootstrap  Create repo, push main/branch/notes, open PR",
+      "  node scripts/publish-release.mjs --seed-roadmap      Create & triage initial English roadmap issues",
       "  node scripts/publish-release.mjs --npm-initial       Run initial public npm publish (requires npm login)",
       "  node scripts/publish-release.mjs --pypi-initial      Upload dist-pypi/* via uv publish (requires UV_PUBLISH_TOKEN)",
       "  node scripts/publish-release.mjs --merge-release     Merge PR to main to trigger OIDC release.yml",
@@ -320,6 +379,9 @@ switch (flag) {
     break;
   case "--github-bootstrap":
     runGithubBootstrap();
+    break;
+  case "--seed-roadmap":
+    runSeedRoadmap();
     break;
   case "--npm-initial":
     runNpmInitial();

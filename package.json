@@ -35,7 +35,10 @@
     "kimi-ai",
     "digital-lake"
   ],
-  "author": "Digital Lake <dev@digital-lake.ai>",
+  "author": {
+    "name": "HorchataHTML (Digital Lake)",
+    "url": "https://github.com/digital-lake-ai"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",

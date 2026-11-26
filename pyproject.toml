@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-  { name = "Digital Lake", email = "dev@digital-lake.ai" }
+  { name = "HorchataHTML (Digital Lake)" }
 ]
 keywords = ["mcp", "mcp-server", "ai-models", "deprecations", "changelog", "llm"]
 classifiers = [

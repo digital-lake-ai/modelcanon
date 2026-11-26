@@ -90,6 +90,9 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
       for (const tool of listedTools.tools) {
         expect(tool.annotations?.readOnlyHint).toBe(true);
         expect(tool.outputSchema).toBeDefined();
+        expect(tool.title).toMatch(/^ModelCanon [A-Z][a-z]+: /);
+        expect(tool.description).toContain("Use when");
+        expect(tool.description).toContain("Not for");
       }
 
       const sonnetAudit = await client.callTool({
