@@ -102,6 +102,19 @@ export function parseLiteLlmPriceMap(
 const THIRD_PARTY_PROXY_REGEX =
   /\b(azure|bedrock|vertex|sagemaker|baseten|together|fireworks|aihubmix|openrouter|huawei|groq|deepinfra|nebius|cloudflare|perplexity|databricks|ollama|vllm)\b/i;
 
+const FIRST_PARTY_RSS_PLATFORMS: Record<string, ProviderId> = {
+  "google ai studio": "gemini",
+  google: "gemini",
+  gemini: "gemini",
+  anthropic: "claude",
+  openai: "openai",
+  deepseek: "deepseek",
+  moonshot: "kimi",
+  "moonshot ai": "kimi",
+  moonshotai: "kimi",
+  kimi: "kimi",
+};
+
 export function parseLiteLlmChangelogRss(
   rawXml: string,
   detectedAt: string = new Date().toISOString(),
@@ -121,16 +134,45 @@ export function parseLiteLlmChangelogRss(
     const combined = `${title} ${description}`.toLowerCase();
 
     if (!title || THIRD_PARTY_PROXY_REGEX.test(combined)) continue;
-    const provider = inferProviderFromText(combined);
-    if (!provider) continue;
+
+    // Extract "<subject> [added ]on <platform>[: body]" linearly without backtracking regexes
+    const colonIdx = title.indexOf(":");
+    const head = (colonIdx >= 0 ? title.slice(0, colonIdx) : title).trim();
+    const body = colonIdx >= 0 ? title.slice(colonIdx + 1).trim() : "";
+    const onIdx = head.toLowerCase().lastIndexOf(" on ");
+    if (onIdx < 0) continue;
+
+    const platform = head
+      .slice(onIdx + 4)
+      .trim()
+      .toLowerCase();
+    const provider = FIRST_PARTY_RSS_PLATFORMS[platform];
+    if (!provider || !matchesProviderText(combined, provider)) continue;
+
+    const targetText = body || head;
+    let category: UpdateEvent["category"];
+    let severity: UpdateEvent["severity"];
+    let effectiveDate: string | undefined;
+
+    if (/\b(?:deprecat\w*|retir\w*|sunset\w*|shutdown|shut\s+down)\b/i.test(targetText)) {
+      category = "deprecation";
+      severity = "warning";
+      effectiveDate = /\b(20\d{2}-\d{2}-\d{2})\b/.exec(body)?.[1];
+    } else if (/\b(?:cost\w*|pric(?:e\w*|ing))\b/i.test(targetText)) {
+      category = "pricing";
+      severity = "info";
+    } else if (body === "" && /\b(?:added\s+on|models?\s+added)\b/i.test(head)) {
+      category = "new_model";
+      severity = "info";
+    } else {
+      continue;
+    }
 
     const modelTokens = extractModelTokens(`${title} ${description}`);
     if (modelTokens.length === 0) continue;
 
     const rawDate = toIsoDate(pubDateRaw);
     const publishedAt = rawDate && rawDate <= todayIso ? rawDate : todayIso;
-    const category = /deprecat|retire|sunset|remov/i.test(combined) ? "deprecation" : "new_model";
-    const severity = category === "deprecation" ? "warning" : "info";
     const slugBase = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -150,6 +192,7 @@ export function parseLiteLlmChangelogRss(
       evidence_quote: firstSentence(title, 200),
       source_url: link.startsWith("http") ? link : LITELLM_CHANGELOG_RSS_URL,
       published_at: publishedAt,
+      ...(effectiveDate ? { effective_date: effectiveDate } : {}),
       detected_at: detectedAt,
     });
   }
@@ -255,25 +298,32 @@ function decodeXmlEntities(input: string): string {
     .trim();
 }
 
-function inferProviderFromText(lower: string): ProviderId | null {
-  if (/\b(gemini|google ai)\b/.test(lower)) return "gemini";
-  if (/\b(claude|anthropic)\b/.test(lower)) return "claude";
-  if (/\b(gpt-|openai|o3|o4-mini)\b/.test(lower)) return "openai";
-  if (/\b(deepseek)\b/.test(lower)) return "deepseek";
-  if (/\b(kimi|moonshot)\b/.test(lower)) return "kimi";
-  return null;
+function matchesProviderText(lower: string, provider: ProviderId): boolean {
+  switch (provider) {
+    case "gemini":
+      return /\b(gemini|gemma|genie|google)\b/.test(lower);
+    case "claude":
+      return /\b(claude|anthropic)\b/.test(lower);
+    case "openai":
+      return /\b(gpt-|chatgpt-|codex-|openai|o1|o3|o4-mini)\b/.test(lower);
+    case "deepseek":
+      return /\bdeepseek\b/.test(lower);
+    case "kimi":
+      return /\b(kimi|moonshot)\b/.test(lower);
+  }
 }
 
 function extractModelTokens(text: string): string[] {
   const sanitized = text.replace(/https?:\/\/\S+/gi, " ");
-  const matches =
-    sanitized.match(
-      /\b(?:gemini-[a-z0-9._-]+|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
-    ) ?? [];
-  return [...new Set(matches.map((m) => m.toLowerCase()).filter(isValidCatalogModelId))].slice(
-    0,
-    6,
-  );
+  const sourcePattern =
+    "\\b(?:gemini-[a-z0-9._-]+|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\\b";
+  const exactLower = sanitized.match(new RegExp(sourcePattern, "g")) ?? [];
+  const caseInsensitive = sanitized.match(new RegExp(sourcePattern, "gi")) ?? [];
+  return [
+    ...new Set(
+      [...exactLower, ...caseInsensitive.map((m) => m.toLowerCase())].filter(isValidCatalogModelId),
+    ),
+  ].slice(0, 12);
 }
 
 function toIsoDate(raw: string): string | null {

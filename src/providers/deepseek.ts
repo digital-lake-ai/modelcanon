@@ -48,7 +48,7 @@ export function parseDeepSeekUpdatesHtml(
       const isRetired = shutdownIso <= detectedIso;
       for (const id of extractModelIds(sentence, { limit: Number.POSITIVE_INFINITY })) {
         const existing = modelMap.get(id);
-        if (!existing || existing.authority !== "explicit") {
+        if (existing?.authority !== "explicit") {
           modelMap.set(id, {
             canonical_id: id,
             provider: "deepseek",

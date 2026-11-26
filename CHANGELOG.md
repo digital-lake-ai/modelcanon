@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-11-26
+
+### Fixed
+- **Linear First-Party LiteLLM RSS Allowlist & Classification (`T2`, `T3`):** Replaced blacklist-only RSS filtering with a linear `O(n)` first-party platform map (`Google AI Studio`, `Google`, `Gemini`, `Anthropic`, `OpenAI`, `DeepSeek`, `Moonshot`, `Kimi`), discarding reseller/subscription noise (`GMI Cloud`, `Replicate`, `NVIDIA NIM`, `ChatGPT Subscription`, `Vertex AI`) and parameter-tweak items, extracting `effective_date` from deprecation items, and cross-checking `evt_litellm_*` `models_affected` against the merged catalog alongside a regression guard asserting zero outbound `If-None-Match` headers.
+- **Biome Diagnostic Hygiene (`T1`):** Added `minIsoDate()` string comparator and resolved all 4 Biome lint warnings across provider adapters without unsafe auto-fixes.
+
+### Changed
+- **Generational & Base-Model Ranking (`T4`):** Added `src/domain/rank.ts` (`parseModelShape`, `compareModelsForListing`) to strip trailing date/build suffixes in linear time, prioritize conversational base models ahead of vertical/experimental variants (`-healthcare`, `-law`, `-preview`, `-highspeed`) and dated snapshots, rank higher numeric generations and flagship tiers first (`claude-opus-5-5` > `claude-sonnet-5-5` > `claude-haiku-5-5`), and tie-break ascending (`A -> Z`).
+- **Live Seed Integrity & 12-Surface Version Parity (`T5`, `T6`):** Enforced LiteLLM RSS catalog invariants in `scripts/build-seed.mjs`, regenerated `data/seed.json`, and extended `scripts/sync-version.mjs` to synchronize `llms.txt` and `.github/ISSUE_TEMPLATE/bug-report.yml` (preserving zero changes to `src/mcp/tools.ts`).
+
 ## [0.1.3] - 2026-11-26
 
 ### Fixed

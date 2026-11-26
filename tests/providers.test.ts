@@ -232,11 +232,40 @@ describe("Provider registry and 5 official adapters", () => {
     expect(kimiFallback.snapshot.events.every((e) => e.published_at <= "2026-11-26")).toBe(true);
 
     const rssFiltered = parseLiteLlmChangelogRss(
-      "<rss><channel><item><title>AIHubMix adds gpt-5.4</title><description>gpt-5.4 via AIHubMix</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item><item><title>Azure OpenAI gpt-4o update</title><description>Azure OpenAI update</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item><item><title>OpenAI GPT-5.4 support</title><description>Direct gpt-5.4 pricing added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item></channel></rss>",
+      [
+        "<rss><channel>",
+        "<item><title>AIHubMix adds gpt-5.4</title><description>gpt-5.4 via AIHubMix</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>GPT-5.4 Pro on GMI Cloud: Supports low reasoning effort disabled</title><description>gpt-5.4-pro</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>GPT-5 Pro on Replicate: Supports low reasoning effort disabled</title><description>gpt-5-pro</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>Kimi K3.1 Pro added on NVIDIA NIM</title><description>kimi-k3.1-pro</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>GPT-5.4 on ChatGPT Subscription: Deprecation source updated</title><description>gpt-5.4</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>Gemini 4 Argon on Vertex AI: Pricing updated</title><description>gemini-4-argon</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>OpenAI GPT-5.4 support</title><description>Missing platform clause gpt-5.4</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>GPT-5 Pro on OpenAI: Supports low reasoning effort disabled</title><description>gpt-5-pro parameter tweak</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>GPT-5.4 added on OpenAI</title><description>Direct openai/gpt-5.4 model added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>Gemini 2.5 Flash on Google AI Studio: Output cost per image token flex price added</title><description>gemini-2.5-flash pricing</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>Claude Opus 4.5 on Anthropic: Deprecation date added: 2027-01-22</title><description>claude-opus-4-5 deprecated</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "</channel></rss>",
+      ].join(""),
       "2026-11-26T08:00:00Z",
     );
-    expect(rssFiltered).toHaveLength(1);
-    expect(rssFiltered[0]?.confidence).toBe("low");
-    expect(rssFiltered[0]?.models_affected).toEqual(["gpt-5.4"]);
+    expect(rssFiltered).toHaveLength(3);
+    expect(rssFiltered[0]).toMatchObject({
+      provider: "openai",
+      category: "new_model",
+      confidence: "low",
+      models_affected: ["gpt-5.4"],
+    });
+    expect(rssFiltered[1]).toMatchObject({
+      provider: "gemini",
+      category: "pricing",
+      models_affected: ["gemini-2.5-flash"],
+    });
+    expect(rssFiltered[2]).toMatchObject({
+      provider: "claude",
+      category: "deprecation",
+      effective_date: "2027-01-22",
+      models_affected: ["claude-opus-4-5"],
+    });
   });
 });
