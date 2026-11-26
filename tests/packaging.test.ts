@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -8,7 +9,7 @@ function readJson(relPath: string): Record<string, unknown> {
   return JSON.parse(readFileSync(resolve(ROOT, relPath), "utf8")) as Record<string, unknown>;
 }
 
-describe("Multiplatform packaging and registry manifests", () => {
+describe("Multiplatform packaging, version parity, and registry manifests", () => {
   it("aligns server.json, package.json, glama.json, smithery.yaml, and Dockerfile at 0.1.0", () => {
     const pkg = readJson("package.json");
     const server = readJson("server.json");
@@ -36,5 +37,23 @@ describe("Multiplatform packaging and registry manifests", () => {
     expect(pyInit).toContain('"npx.cmd"');
     expect(pyInit).toContain("shell=False");
     expect(pyMain).toContain("main_mcp()");
+  });
+
+  it("includes MCP registry ownership comment, docs, and passes version:check", () => {
+    const readme = readFileSync(resolve(ROOT, "README.md"), "utf8");
+    expect(readme.startsWith("<!-- mcp-name: io.github.digital-lake-ai/modelcanon -->")).toBe(true);
+    expect(existsSync(resolve(ROOT, "llms.txt"))).toBe(true);
+    expect(existsSync(resolve(ROOT, "CHANGELOG.md"))).toBe(true);
+    expect(existsSync(resolve(ROOT, "SECURITY.md"))).toBe(true);
+
+    const out = execFileSync(
+      process.execPath,
+      [resolve(ROOT, "scripts/sync-version.mjs"), "--check"],
+      {
+        cwd: ROOT,
+        encoding: "utf8",
+      },
+    );
+    expect(out).toContain("0.1.0");
   });
 });

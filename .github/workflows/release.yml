@@ -1,0 +1,103 @@
+# Automated release & multi-registry publish workflow.
+# Note for initial 0.1.0 bootstrap:
+# npm Trusted Publishing (OIDC) requires the package to already exist on npmjs.com.
+# Publish 0.1.0 once manually (`npm publish --access public` with 2FA), then link this
+# workflow as a Trusted Publisher in npmjs.com package settings within 48 hours.
+# PyPI supports Pending Publishers upfront before the first publish.
+
+name: Release & Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+      - "server.json"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release & Publish
+    runs-on: ubuntu-latest
+    environment: Digital-Lake-ModelCanon
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect version change
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          new_version=$(jq -r .version package.json)
+          old_version=$(git show HEAD~1:package.json 2>/dev/null | jq -r .version 2>/dev/null || echo "")
+          echo "new_version=$new_version"
+          echo "old_version=$old_version"
+          if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ] && [ "$new_version" = "$old_version" ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "tag=v${new_version}" >> "$GITHUB_OUTPUT"
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js 22
+        if: steps.detect.outputs.should_release == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies & verify
+        if: steps.detect.outputs.should_release == 'true'
+        env:
+          VERSION: ${{ steps.detect.outputs.new_version }}
+        run: |
+          npm ci
+          npm run version:check
+          grep -Fq "## [${VERSION}]" CHANGELOG.md
+          npm run lint
+          npm run build
+          npm run seed:check
+          npm test
+
+      - name: Create GitHub Release
+        if: steps.detect.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.detect.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" --target "${GITHUB_SHA}" --title "${TAG}" --generate-notes
+          fi
+
+      - name: Publish to npm (OIDC Trusted Publisher)
+        if: steps.detect.outputs.should_release == 'true'
+        run: npm publish --provenance --access public
+
+      - name: Setup Python 3.12
+        if: steps.detect.outputs.should_release == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build Python sdist & wheel
+        if: steps.detect.outputs.should_release == 'true'
+        run: |
+          python -m pip install --upgrade build
+          python -m build --outdir dist-pypi
+
+      - name: Publish to PyPI (OIDC Trusted Publisher)
+        if: steps.detect.outputs.should_release == 'true'
+        continue-on-error: true
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-pypi/
