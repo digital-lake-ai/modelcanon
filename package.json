@@ -18,6 +18,7 @@
     "seed:check": "node scripts/build-seed.mjs --check",
     "version:check": "node scripts/sync-version.mjs --check",
     "version:sync": "node scripts/sync-version.mjs",
+    "publish:preflight": "node scripts/publish-release.mjs --preflight",
     "prepublishOnly": "npm run build && npm run seed:check && npm test"
   },
   "keywords": [

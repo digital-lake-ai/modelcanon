@@ -55,5 +55,11 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
       },
     );
     expect(out).toContain("0.1.0");
+
+    const releaseYml = readFileSync(resolve(ROOT, ".github/workflows/release.yml"), "utf8");
+    expect(existsSync(resolve(ROOT, "scripts/publish-release.mjs"))).toBe(true);
+    expect(releaseYml).toContain('npm view "@digital-lake/modelcanon@${VERSION}"');
+    expect(releaseYml).toContain("mcp-publisher login github-oidc");
+    expect(String(readJson("server.json").description).length).toBeLessThanOrEqual(100);
   });
 });
