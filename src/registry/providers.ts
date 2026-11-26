@@ -194,6 +194,10 @@ export function extractDatedChangelogEvents(
   return events;
 }
 
+export function minIsoDate(a: string, b: string): string {
+  return a <= b ? a : b;
+}
+
 export function parseFlexibleDate(raw: string): string | null {
   const cleaned = raw
     .replace(/\*\*/g, "")

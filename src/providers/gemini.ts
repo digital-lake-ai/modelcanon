@@ -2,6 +2,7 @@ import { fetchResource } from "../http/fetcher.js";
 import {
   extractDatedChangelogEvents,
   extractModelIds,
+  minIsoDate,
   type ProviderAdapter,
   type ProviderIngestionResult,
   type ProviderModelPatch,
@@ -80,7 +81,7 @@ export function parseGeminiDeprecations(
                 200,
               ),
             source_url: GEMINI_DEPRECATIONS_URL,
-            published_at: shutdownIso <= todayIso ? shutdownIso : todayIso,
+            published_at: minIsoDate(shutdownIso, todayIso),
             effective_date: shutdownIso,
             detected_at: detectedAt,
           });

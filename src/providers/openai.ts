@@ -2,6 +2,7 @@ import { fetchResource } from "../http/fetcher.js";
 import {
   extractDatedChangelogEvents,
   extractModelIds,
+  minIsoDate,
   type ProviderAdapter,
   type ProviderIngestionResult,
   type ProviderModelPatch,
@@ -71,11 +72,7 @@ export function parseOpenAiDeprecations(
       if (shutdownIso) {
         const todayIso = detectedAt.slice(0, 10);
         const publishedAt =
-          noticeIso && noticeIso <= todayIso
-            ? noticeIso
-            : shutdownIso <= todayIso
-              ? shutdownIso
-              : todayIso;
+          noticeIso && noticeIso <= todayIso ? noticeIso : minIsoDate(shutdownIso, todayIso);
         const cleanAffected = stripMarkdownNoise(affectedRaw);
         const cleanReplacement = stripMarkdownNoise(replacementRaw);
         events.push({

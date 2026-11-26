@@ -2,6 +2,7 @@ import { fetchResource } from "../http/fetcher.js";
 import {
   extractDatedChangelogEvents,
   extractModelIds,
+  minIsoDate,
   type ProviderAdapter,
   type ProviderIngestionResult,
   type ProviderModelPatch,
@@ -74,9 +75,7 @@ export function parseClaudeDeprecations(
           const publishedAt =
             existing?.deprecation_date && existing.deprecation_date <= todayIso
               ? existing.deprecation_date
-              : retDate <= todayIso
-                ? retDate
-                : todayIso;
+              : minIsoDate(retDate, todayIso);
           events.push({
             id: `evt_claude_dep_${depId}_${retDate.replace(/-/g, "")}`,
             slug: `claude-${depId}-retirement-${retDate}`,
