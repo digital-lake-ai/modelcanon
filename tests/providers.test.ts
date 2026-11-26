@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { parseLiteLlmChangelogRss } from "../src/enrichers/litellm.js";
 import { parseClaudeDeprecations } from "../src/providers/claude.js";
 import { parseDeepSeekUpdatesHtml } from "../src/providers/deepseek.js";
 import { parseGeminiDeprecations } from "../src/providers/gemini.js";
@@ -36,6 +37,17 @@ describe("Provider registry and 5 official adapters", () => {
     expect(pro25?.status).toBe("deprecated");
     expect(pro25?.shutdown_date).toBe("2026-12-01");
     expect(pro25?.replacement_id).toBe("gemini-3.8-flash");
+    const pro25Event = parsed.events.find((e) => e.models_affected.includes("gemini-2.5-pro"));
+    expect(pro25Event?.published_at).toBe("2026-11-26");
+    expect(pro25Event?.effective_date).toBe("2026-12-01");
+
+    const distantGemini = parseGeminiDeprecations(
+      "{% table %}\n* Model\n* Shutdown date\n* Recommended replacement\n---\n* `gemini-3.5-flash`\n* 2028-05-14\n* `gemini-4-neon`\n{% /table %}",
+      "2026-11-26T08:00:00Z",
+      new Date("2026-11-26T08:00:00Z"),
+    );
+    expect(distantGemini.models[0]?.shutdown_date).toBe("2028-05-14");
+    expect(distantGemini.events).toHaveLength(0);
   });
 
   it("parses Claude deprecation tables and undated alias retirement notes", () => {
@@ -47,6 +59,7 @@ describe("Provider registry and 5 official adapters", () => {
     expect(sonnetUndated?.status).toBe("deprecated");
     expect(sonnetUndated?.shutdown_date).toBe("2026-11-30");
     expect(sonnetUndated?.replacement_id).toBe("claude-sonnet-5-5");
+    expect(parsed.events.every((e) => e.published_at <= "2026-11-26")).toBe(true);
 
     const opus55 = parsed.models.find((m) => m.canonical_id === "claude-opus-5-5");
     expect(opus55?.status).toBe("active");
@@ -216,5 +229,14 @@ describe("Provider registry and 5 official adapters", () => {
     expect(moonshot?.shutdown_date).toBe("2026-08-31");
     expect(moonshot?.official_url).toContain("litellm");
     expect(moonshot?.source_origin).toBe("catalog_only");
+    expect(kimiFallback.snapshot.events.every((e) => e.published_at <= "2026-11-26")).toBe(true);
+
+    const rssFiltered = parseLiteLlmChangelogRss(
+      "<rss><channel><item><title>AIHubMix adds gpt-5.4</title><description>gpt-5.4 via AIHubMix</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item><item><title>Azure OpenAI gpt-4o update</title><description>Azure OpenAI update</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item><item><title>OpenAI GPT-5.4 support</title><description>Direct gpt-5.4 pricing added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item></channel></rss>",
+      "2026-11-26T08:00:00Z",
+    );
+    expect(rssFiltered).toHaveLength(1);
+    expect(rssFiltered[0]?.confidence).toBe("low");
+    expect(rssFiltered[0]?.models_affected).toEqual(["gpt-5.4"]);
   });
 });

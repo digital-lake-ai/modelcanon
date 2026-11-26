@@ -69,6 +69,13 @@ export function parseOpenAiDeprecations(
       }
 
       if (shutdownIso) {
+        const todayIso = detectedAt.slice(0, 10);
+        const publishedAt =
+          noticeIso && noticeIso <= todayIso
+            ? noticeIso
+            : shutdownIso <= todayIso
+              ? shutdownIso
+              : todayIso;
         const cleanAffected = stripMarkdownNoise(affectedRaw);
         const cleanReplacement = stripMarkdownNoise(replacementRaw);
         events.push({
@@ -87,7 +94,8 @@ export function parseOpenAiDeprecations(
               200,
             ),
           source_url: OPENAI_DEPRECATIONS_URL,
-          published_at: noticeIso ?? shutdownIso,
+          published_at: publishedAt,
+          effective_date: shutdownIso,
           detected_at: detectedAt,
         });
       }

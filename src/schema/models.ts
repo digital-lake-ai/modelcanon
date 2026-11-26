@@ -75,6 +75,7 @@ export const UpdateEventSchema = z.object({
   evidence_quote: z.string().min(1),
   source_url: HttpUrlSchema,
   published_at: z.string().min(1),
+  effective_date: z.string().nullable().optional(),
   detected_at: z.string().min(1),
 });
 export type UpdateEvent = z.infer<typeof UpdateEventSchema>;

@@ -58,26 +58,33 @@ export function parseGeminiDeprecations(
       }
 
       if (shutdownIso) {
-        const cleanReplacement = stripMarkdownNoise(replacementCell);
-        events.push({
-          id: `evt_gemini_dep_${modelIds[0]}_${shutdownIso.replace(/-/g, "")}`,
-          slug: `gemini-${modelIds[0]}-shutdown-${shutdownIso}`,
-          provider: "gemini",
-          category: "deprecation",
-          severity: isRetired ? "critical" : "warning",
-          confidence: "high",
-          models_affected: modelIds,
-          title: `${modelIds[0]} scheduled for shutdown on ${shutdownIso}`,
-          agent_summary: `${modelIds[0]} shutdown date is ${shutdownIso}; replacement: ${replacementId ?? (cleanReplacement || "see docs")}.`,
-          evidence_quote:
-            `${modelIds[0]} | Shutdown: ${shutdownIso} | Replacement: ${cleanReplacement}`.slice(
-              0,
-              200,
-            ),
-          source_url: GEMINI_DEPRECATIONS_URL,
-          published_at: shutdownIso,
-          detected_at: detectedAt,
-        });
+        const todayIso = detectedAt.slice(0, 10);
+        const shutdownMs = Date.parse(`${shutdownIso}T00:00:00Z`);
+        const withinHorizon =
+          shutdownIso <= todayIso || shutdownMs - now.getTime() <= 180 * 86_400_000;
+        if (withinHorizon) {
+          const cleanReplacement = stripMarkdownNoise(replacementCell);
+          events.push({
+            id: `evt_gemini_dep_${modelIds[0]}_${shutdownIso.replace(/-/g, "")}`,
+            slug: `gemini-${modelIds[0]}-shutdown-${shutdownIso}`,
+            provider: "gemini",
+            category: "deprecation",
+            severity: isRetired ? "critical" : "warning",
+            confidence: "high",
+            models_affected: modelIds,
+            title: `${modelIds[0]} scheduled for shutdown on ${shutdownIso}`,
+            agent_summary: `${modelIds[0]} shutdown date is ${shutdownIso}; replacement: ${replacementId ?? (cleanReplacement || "see docs")}.`,
+            evidence_quote:
+              `${modelIds[0]} | Shutdown: ${shutdownIso} | Replacement: ${cleanReplacement}`.slice(
+                0,
+                200,
+              ),
+            source_url: GEMINI_DEPRECATIONS_URL,
+            published_at: shutdownIso <= todayIso ? shutdownIso : todayIso,
+            effective_date: shutdownIso,
+            detected_at: detectedAt,
+          });
+        }
       }
     }
   }

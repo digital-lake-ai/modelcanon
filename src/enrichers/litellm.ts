@@ -99,6 +99,9 @@ export function parseLiteLlmPriceMap(
   return records;
 }
 
+const THIRD_PARTY_PROXY_REGEX =
+  /\b(azure|bedrock|vertex|sagemaker|baseten|together|fireworks|aihubmix|openrouter|huawei|groq|deepinfra|nebius|cloudflare|perplexity|databricks|ollama|vllm)\b/i;
+
 export function parseLiteLlmChangelogRss(
   rawXml: string,
   detectedAt: string = new Date().toISOString(),
@@ -106,6 +109,7 @@ export function parseLiteLlmChangelogRss(
 ): UpdateEvent[] {
   const events: UpdateEvent[] = [];
   const itemMatches = rawXml.matchAll(/<item>([\s\S]*?)<\/item>/gi);
+  const todayIso = detectedAt.slice(0, 10);
 
   for (const match of itemMatches) {
     if (events.length >= limit) break;
@@ -116,13 +120,17 @@ export function parseLiteLlmChangelogRss(
     const description = decodeXmlEntities(extractTag(itemXml, "description"));
     const combined = `${title} ${description}`.toLowerCase();
 
+    if (!title || THIRD_PARTY_PROXY_REGEX.test(combined)) continue;
     const provider = inferProviderFromText(combined);
-    if (!provider || !title) continue;
+    if (!provider) continue;
 
-    const publishedAt = toIsoDate(pubDateRaw) ?? detectedAt.slice(0, 10);
+    const modelTokens = extractModelTokens(`${title} ${description}`);
+    if (modelTokens.length === 0) continue;
+
+    const rawDate = toIsoDate(pubDateRaw);
+    const publishedAt = rawDate && rawDate <= todayIso ? rawDate : todayIso;
     const category = /deprecat|retire|sunset|remov/i.test(combined) ? "deprecation" : "new_model";
     const severity = category === "deprecation" ? "warning" : "info";
-    const modelTokens = extractModelTokens(description || title);
     const slugBase = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -135,7 +143,7 @@ export function parseLiteLlmChangelogRss(
       provider,
       category,
       severity,
-      confidence: "medium",
+      confidence: "low",
       models_affected: modelTokens,
       title,
       agent_summary: firstSentence(description || title, 220),
@@ -257,9 +265,15 @@ function inferProviderFromText(lower: string): ProviderId | null {
 }
 
 function extractModelTokens(text: string): string[] {
+  const sanitized = text.replace(/https?:\/\/\S+/gi, " ");
   const matches =
-    text.match(/\b(?:gemini|claude|gpt|o3|o4|deepseek|kimi|moonshot)[a-z0-9._-]{2,}\b/gi) ?? [];
-  return [...new Set(matches.map((m) => m.toLowerCase()))].slice(0, 6);
+    sanitized.match(
+      /\b(?:gemini-[a-z0-9._-]+|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
+    ) ?? [];
+  return [...new Set(matches.map((m) => m.toLowerCase()).filter(isValidCatalogModelId))].slice(
+    0,
+    6,
+  );
 }
 
 function toIsoDate(raw: string): string | null {
