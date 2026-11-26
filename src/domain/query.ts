@@ -6,6 +6,7 @@ import type {
   UpdateEvent,
 } from "../schema/models.js";
 import { resolveModelMatch } from "./normalize.js";
+import { compareModelsForListing } from "./rank.js";
 
 export interface AuditModelOutput {
   queried_id: string;
@@ -141,9 +142,6 @@ const SEVERITY_RANK: Record<UpdateEvent["severity"], number> = {
   info: 2,
 };
 
-const FLAGSHIP_MODEL_REGEX =
-  /^(?:gemini-\d|claude-(?:opus|sonnet|haiku|fable|mythos)|gpt-\d|o[134]|codex-|chatgpt-|deepseek-(?:v\d|r\d|flash)|kimi-k\d)/i;
-
 const INTERLEAVE_PROVIDERS: readonly ProviderId[] = [
   "gemini",
   "claude",
@@ -241,21 +239,7 @@ export function listActiveModels(
       if (effectiveStatus === "active") return true;
       return includeDeprecated && effectiveStatus === "deprecated";
     })
-    .sort((a, b) => {
-      const aActive = a.effectiveStatus === "active" ? 0 : 1;
-      const bActive = b.effectiveStatus === "active" ? 0 : 1;
-      if (aActive !== bActive) return aActive - bActive;
-
-      const aVerified = a.model.source_origin === "live_verified" ? 0 : 1;
-      const bVerified = b.model.source_origin === "live_verified" ? 0 : 1;
-      if (aVerified !== bVerified) return aVerified - bVerified;
-
-      const aFlagship = FLAGSHIP_MODEL_REGEX.test(a.model.canonical_id) ? 0 : 1;
-      const bFlagship = FLAGSHIP_MODEL_REGEX.test(b.model.canonical_id) ? 0 : 1;
-      if (aFlagship !== bFlagship) return aFlagship - bFlagship;
-
-      return b.model.canonical_id.localeCompare(a.model.canonical_id, "en", { numeric: true });
-    });
+    .sort(compareModelsForListing);
 
   const ordered = provider === "all" ? interleaveByProvider(ranked) : ranked;
 
