@@ -247,7 +247,7 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     expect(seenHeaders[1]["x-api-key"]).toBeUndefined();
 
     const rss = parseLiteLlmChangelogRss(
-      "<rss><channel><item><title>Claude Opus 5.5</title><description>&amp;lt;script&amp;gt; claude-opus-5-5</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item></channel></rss>",
+      "<rss><channel><item><title>Claude Opus 5.5 added on Anthropic</title><description>&amp;lt;script&amp;gt; claude-opus-5-5</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item></channel></rss>",
       "2026-11-26T08:00:00Z",
     );
     expect(rss[0]?.agent_summary).toContain("&lt;script&gt;");
