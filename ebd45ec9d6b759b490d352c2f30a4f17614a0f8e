@@ -1,0 +1,31 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-26T20:07:24.083Z",
+  "issue": {
+    "id": 22,
+    "title": "fix(catalog): enforce first-party RSS allowlist, generational base-model ranking, and release v0.1.4",
+    "tier": "tier-3"
+  },
+  "subtask": {
+    "id": "T3",
+    "title": "Cross-check LiteLLM RSS models_affected against catalog and add If-None-Match guard test",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/registry/providers.ts",
+        "tests/ingest.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npx vitest run tests/ingest.test.ts tests/providers.test.ts && npx biome check --error-on-warnings .",
+      "assignee": "gemini/3.8-flash (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 38
+  },
+  "tier": "tier-3",
+  "tierExplicit": true,
+  "author": "gemini/3.8-flash (antigravity)"
+}
