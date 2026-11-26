@@ -1,11 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { computeDaysUntilUtcDate, resolveEffectiveStatus } from "../domain/query.js";
 import { ingestFullCatalog } from "../registry/providers.js";
 import { CatalogCacheStore } from "../store/cache.js";
 import { registerModelCanonTools, type SnapshotProviderFn } from "./tools.js";
 
 export const MCP_SERVER_NAME = "modelcanon";
-export const MCP_SERVER_VERSION = "0.1.2";
+export const MCP_SERVER_VERSION = "0.1.3";
 
 export interface CreateServerOptions {
   cacheStore?: CatalogCacheStore;
@@ -77,13 +78,32 @@ export function createModelCanonServer(options: CreateServerOptions = {}): McpSe
     },
     async (uri) => {
       const snapshot = await getSnapshot();
+      const currentNow = now();
       const deprecated = snapshot.models
-        .filter((m) => m.status === "deprecated" || m.shutdown_date !== null)
-        .map((m) => ({
+        .map((m) => {
+          const effectiveStatus = resolveEffectiveStatus(m, currentNow);
+          const daysUntilShutdown = computeDaysUntilUtcDate(m.shutdown_date, currentNow);
+          return { model: m, effectiveStatus, daysUntilShutdown };
+        })
+        .filter(
+          ({ effectiveStatus, daysUntilShutdown }) =>
+            effectiveStatus === "deprecated" ||
+            (effectiveStatus !== "retired" && daysUntilShutdown !== null && daysUntilShutdown > 0),
+        )
+        .sort(
+          (a, b) =>
+            (a.model.shutdown_date ?? "9999-12-31").localeCompare(
+              b.model.shutdown_date ?? "9999-12-31",
+            ) ||
+            a.model.provider.localeCompare(b.model.provider) ||
+            a.model.canonical_id.localeCompare(b.model.canonical_id),
+        )
+        .map(({ model: m, effectiveStatus, daysUntilShutdown }) => ({
           canonical_id: m.canonical_id,
           provider: m.provider,
-          status: m.status,
+          status: effectiveStatus,
           shutdown_date: m.shutdown_date,
+          days_until_shutdown: daysUntilShutdown,
           replacement_id: m.replacement_id,
           official_url: m.official_url,
         }));

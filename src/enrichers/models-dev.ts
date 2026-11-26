@@ -44,6 +44,14 @@ export interface ModelsDevEnricherResult {
   notModified: boolean;
 }
 
+export function isValidCatalogModelId(canonicalId: string): boolean {
+  if (!canonicalId || /[:/\s]/.test(canonicalId)) return false;
+  if (!/[-0-9]/.test(canonicalId)) return false;
+  if (/\.(?:md|mdx|txt|html?|json|xml|ya?ml)$/i.test(canonicalId)) return false;
+  if (/search-api/i.test(canonicalId)) return false;
+  return true;
+}
+
 export function parseModelsDevPayload(
   rawJson: string,
   verifiedAt: string = new Date().toISOString(),
@@ -62,7 +70,7 @@ export function parseModelsDevPayload(
 
     for (const [modelKey, entry] of Object.entries(providerBlock.models)) {
       const canonicalId = (entry.id || modelKey).trim();
-      if (!canonicalId) continue;
+      if (!isValidCatalogModelId(canonicalId)) continue;
 
       const aliases = new Set<string>();
       if (entry.canonical_model_id && entry.canonical_model_id !== canonicalId) {

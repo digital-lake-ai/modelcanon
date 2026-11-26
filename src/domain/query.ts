@@ -65,6 +65,20 @@ export function computeDaysUntilUtcDate(
   return Math.round((targetMs - todayUtcMs) / 86_400_000);
 }
 
+export function resolveEffectiveStatus(
+  model: Pick<ModelRecord, "status" | "shutdown_date">,
+  now: Date = new Date(),
+): ModelRecord["status"] {
+  if (model.status === "retired") {
+    return "retired";
+  }
+  const days = computeDaysUntilUtcDate(model.shutdown_date, now);
+  if (days !== null && days <= 0) {
+    return "retired";
+  }
+  return model.status;
+}
+
 export function auditModelId(
   snapshot: CatalogSnapshot,
   modelId: string,
@@ -93,10 +107,7 @@ export function auditModelId(
   }
 
   const daysRemaining = computeDaysUntilUtcDate(matched.shutdown_date, now);
-  const resolvedStatus =
-    daysRemaining !== null && daysRemaining <= 0 && matched.status === "deprecated"
-      ? "retired"
-      : matched.status;
+  const resolvedStatus = resolveEffectiveStatus(matched, now);
 
   return {
     queried_id: modelId,
@@ -118,6 +129,29 @@ export function auditModelId(
   };
 }
 
+const CONFIDENCE_RANK: Record<UpdateEvent["confidence"], number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
+const SEVERITY_RANK: Record<UpdateEvent["severity"], number> = {
+  critical: 0,
+  warning: 1,
+  info: 2,
+};
+
+const FLAGSHIP_MODEL_REGEX =
+  /^(?:gemini-\d|claude-(?:opus|sonnet|haiku|fable|mythos)|gpt-\d|o[134]|codex-|chatgpt-|deepseek-(?:v\d|r\d|flash)|kimi-k\d)/i;
+
+const INTERLEAVE_PROVIDERS: readonly ProviderId[] = [
+  "gemini",
+  "claude",
+  "openai",
+  "deepseek",
+  "kimi",
+];
+
 export function getLatestUpdates(
   snapshot: CatalogSnapshot,
   filters: {
@@ -135,6 +169,15 @@ export function getLatestUpdates(
     typeof filters.days === "number" && filters.days > 0
       ? now.getTime() - filters.days * 86_400_000
       : null;
+  const todayEndUtcMs = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    23,
+    59,
+    59,
+    999,
+  );
 
   const filtered = snapshot.events
     .filter((evt) => {
@@ -142,10 +185,21 @@ export function getLatestUpdates(
       if (category !== "all" && evt.category !== category) return false;
       if (minTimestamp !== null) {
         const pubMs = Date.parse(`${evt.published_at}T00:00:00Z`);
-        if (Number.isFinite(pubMs) && pubMs < minTimestamp) return false;
+        if (!Number.isFinite(pubMs) || pubMs < minTimestamp || pubMs > todayEndUtcMs) {
+          return false;
+        }
       }
       return true;
     })
+    .sort(
+      (a, b) =>
+        b.published_at.localeCompare(a.published_at) ||
+        (a.id.startsWith("evt_litellm_") ? 1 : 0) - (b.id.startsWith("evt_litellm_") ? 1 : 0) ||
+        CONFIDENCE_RANK[a.confidence] - CONFIDENCE_RANK[b.confidence] ||
+        SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
+        a.provider.localeCompare(b.provider) ||
+        a.id.localeCompare(b.id),
+    )
     .slice(0, limit)
     .map((evt) => ({
       id: evt.id,
@@ -174,36 +228,80 @@ export function listActiveModels(
     includeDeprecated?: boolean;
     limit?: number;
   } = {},
+  now: Date = new Date(),
 ): { stale: boolean; total_returned: number; models: ActiveModelItem[] } {
   const provider = filters.provider ?? "all";
   const includeDeprecated = filters.includeDeprecated ?? false;
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
 
-  const items = snapshot.models
-    .filter((model) => {
+  const ranked = snapshot.models
+    .map((model) => ({ model, effectiveStatus: resolveEffectiveStatus(model, now) }))
+    .filter(({ model, effectiveStatus }) => {
       if (provider !== "all" && model.provider !== provider) return false;
-      if (model.status === "active") return true;
-      return includeDeprecated && model.status === "deprecated";
+      if (effectiveStatus === "active") return true;
+      return includeDeprecated && effectiveStatus === "deprecated";
     })
-    .sort(
-      (a, b) =>
-        a.provider.localeCompare(b.provider) || a.canonical_id.localeCompare(b.canonical_id),
-    )
-    .slice(0, limit)
-    .map((model) => ({
-      canonical_id: model.canonical_id,
-      provider: model.provider,
-      status: model.status,
-      context_window: model.context_window,
-      max_output_tokens: model.max_output_tokens,
-      pricing_per_1m: model.pricing_per_1m,
-      supports_temperature: model.supports_temperature,
-      official_url: model.official_url,
-    }));
+    .sort((a, b) => {
+      const aActive = a.effectiveStatus === "active" ? 0 : 1;
+      const bActive = b.effectiveStatus === "active" ? 0 : 1;
+      if (aActive !== bActive) return aActive - bActive;
+
+      const aVerified = a.model.source_origin === "live_verified" ? 0 : 1;
+      const bVerified = b.model.source_origin === "live_verified" ? 0 : 1;
+      if (aVerified !== bVerified) return aVerified - bVerified;
+
+      const aFlagship = FLAGSHIP_MODEL_REGEX.test(a.model.canonical_id) ? 0 : 1;
+      const bFlagship = FLAGSHIP_MODEL_REGEX.test(b.model.canonical_id) ? 0 : 1;
+      if (aFlagship !== bFlagship) return aFlagship - bFlagship;
+
+      return b.model.canonical_id.localeCompare(a.model.canonical_id, "en", { numeric: true });
+    });
+
+  const ordered = provider === "all" ? interleaveByProvider(ranked) : ranked;
+
+  const items = ordered.slice(0, limit).map(({ model, effectiveStatus }) => ({
+    canonical_id: model.canonical_id,
+    provider: model.provider,
+    status: effectiveStatus,
+    context_window: model.context_window,
+    max_output_tokens: model.max_output_tokens,
+    pricing_per_1m: model.pricing_per_1m,
+    supports_temperature: model.supports_temperature,
+    official_url: model.official_url,
+  }));
 
   return {
     stale: snapshot.stale,
     total_returned: items.length,
     models: items,
   };
+}
+
+function interleaveByProvider<T extends { model: ModelRecord }>(entries: readonly T[]): T[] {
+  const buckets = new Map<ProviderId, T[]>();
+  for (const id of INTERLEAVE_PROVIDERS) {
+    buckets.set(id, []);
+  }
+  for (const entry of entries) {
+    const bucket = buckets.get(entry.model.provider);
+    if (bucket) {
+      bucket.push(entry);
+    }
+  }
+
+  const out: T[] = [];
+  let idx = 0;
+  while (out.length < entries.length) {
+    let addedInRound = false;
+    for (const id of INTERLEAVE_PROVIDERS) {
+      const item = buckets.get(id)?.[idx];
+      if (item) {
+        out.push(item);
+        addedInRound = true;
+      }
+    }
+    if (!addedInRound) break;
+    idx += 1;
+  }
+  return out;
 }

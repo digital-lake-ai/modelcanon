@@ -113,7 +113,7 @@ npx -y @smithery/cli install @digital-lake/modelcanon --client claude
 **Cross-Platform Native Cache Paths** (with automatic in-memory fallback on read-only filesystems):
 - **Linux:** `$XDG_CACHE_HOME/modelcanon` (defaults to `~/.cache/modelcanon`)
 - **macOS:** `~/Library/Caches/modelcanon`
-- **Windows:** `%LOCALAPPDATA%\modelcanon\Cache`
+- **Windows:** `%LOCALAPPDATA%\modelcanon\cache`
 
 ---
 

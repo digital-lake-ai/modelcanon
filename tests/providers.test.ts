@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { parseLiteLlmChangelogRss } from "../src/enrichers/litellm.js";
 import { parseClaudeDeprecations } from "../src/providers/claude.js";
 import { parseDeepSeekUpdatesHtml } from "../src/providers/deepseek.js";
 import { parseGeminiDeprecations } from "../src/providers/gemini.js";
@@ -36,6 +37,17 @@ describe("Provider registry and 5 official adapters", () => {
     expect(pro25?.status).toBe("deprecated");
     expect(pro25?.shutdown_date).toBe("2026-12-01");
     expect(pro25?.replacement_id).toBe("gemini-3.8-flash");
+    const pro25Event = parsed.events.find((e) => e.models_affected.includes("gemini-2.5-pro"));
+    expect(pro25Event?.published_at).toBe("2026-11-26");
+    expect(pro25Event?.effective_date).toBe("2026-12-01");
+
+    const distantGemini = parseGeminiDeprecations(
+      "{% table %}\n* Model\n* Shutdown date\n* Recommended replacement\n---\n* `gemini-3.5-flash`\n* 2028-05-14\n* `gemini-4-neon`\n{% /table %}",
+      "2026-11-26T08:00:00Z",
+      new Date("2026-11-26T08:00:00Z"),
+    );
+    expect(distantGemini.models[0]?.shutdown_date).toBe("2028-05-14");
+    expect(distantGemini.events).toHaveLength(0);
   });
 
   it("parses Claude deprecation tables and undated alias retirement notes", () => {
@@ -47,6 +59,7 @@ describe("Provider registry and 5 official adapters", () => {
     expect(sonnetUndated?.status).toBe("deprecated");
     expect(sonnetUndated?.shutdown_date).toBe("2026-11-30");
     expect(sonnetUndated?.replacement_id).toBe("claude-sonnet-5-5");
+    expect(parsed.events.every((e) => e.published_at <= "2026-11-26")).toBe(true);
 
     const opus55 = parsed.models.find((m) => m.canonical_id === "claude-opus-5-5");
     expect(opus55?.status).toBe("active");
@@ -70,19 +83,51 @@ describe("Provider registry and 5 official adapters", () => {
     expect(deepseek.models[0]?.canonical_id).toBe("deepseek-flash");
 
     const sanitizedDeepseek = parseDeepSeekUpdatesHtml(
+      "<article><p>Date: 2026-11-13</p><h2>Safe title</h2><script>alert(1)</script><p>The deepseek-v4-pro model replaces legacy models. The two legacy API model names, deepseek-chat and deepseek-reasoner, will be discontinued in three months (2026-07-24).</p></article>",
+      "2026-11-26T08:00:00Z",
+    );
+    expect(
+      sanitizedDeepseek.models.find((m) => m.canonical_id === "deepseek-v4-pro")?.authority,
+    ).toBe("mention");
+    const dsChat = sanitizedDeepseek.models.find((m) => m.canonical_id === "deepseek-chat");
+    expect(dsChat?.authority).toBe("explicit");
+    expect(dsChat?.status).toBe("retired");
+    expect(dsChat?.shutdown_date).toBe("2026-07-24");
+
+    const sanitizedEntityDeepseek = parseDeepSeekUpdatesHtml(
       "<article><p>Date: 2026-11-13</p><h2>Safe title</h2><script>alert(1)</script><p>The deepseek-flash model supports &amp;lt;tag&amp;gt; cleanly in API.</p></article>",
       "2026-11-26T08:00:00Z",
     );
-    expect(sanitizedDeepseek.events[0]?.agent_summary).not.toContain("alert(1)");
-    expect(sanitizedDeepseek.events[0]?.agent_summary).toContain("&lt;tag&gt;");
+    expect(sanitizedEntityDeepseek.events[0]?.agent_summary).not.toContain("alert(1)");
+    expect(sanitizedEntityDeepseek.events[0]?.agent_summary).toContain("&lt;tag&gt;");
 
     const kimi = parseKimiDocs(
-      "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) with 1M context.",
-      "All K3 series models support a 1,048,576-token context window.",
+      "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) with 1M context.\n- [Kimi API Docs](https://platform.kimi.ai/docs/guide/kimi-api.md): Guide.",
+      "All K3 series models support a 1,048,576-token context window. Legacy `moonshot-v1-8k` (`262,144` tokens). October 31, 2026 notice.",
       "2026-11-26T08:00:00Z",
+      [
+        "## Multi-modal Model",
+        "| Model Name | Description |",
+        "| - | - |",
+        "| `kimi-k3.1-pro` | Flagship 1M-token model. |",
+        "",
+        "## Deprecated Models",
+        "| Model Name | Description |",
+        "| - | - |",
+        "| `kimi-k2.7-code` | Deprecation expected in late December 2026 |",
+        "| `moonshot-v1-8k` | Deprecated |",
+      ].join("\n"),
     );
     expect(kimi.models.some((m) => m.canonical_id === "kimi-k3.1-pro")).toBe(true);
-    expect(kimi.events.length).toBeGreaterThan(0);
+    expect(kimi.models.some((m) => m.canonical_id.endsWith(".md"))).toBe(false);
+    const k27 = kimi.models.find((m) => m.canonical_id === "kimi-k2.7-code");
+    expect(k27?.status).toBe("deprecated");
+    expect(k27?.shutdown_date).toBe("2026-12-31");
+    expect(k27?.replacement_id).toBe("kimi-k3.1-pro");
+    const moonshot = kimi.models.find((m) => m.canonical_id === "moonshot-v1-8k");
+    expect(moonshot?.api_constraints).toEqual([]);
+    expect(kimi.events.some((e) => e.id.startsWith("evt_kimi_doc_"))).toBe(false);
+    expect(kimi.events.some((e) => e.id === "evt_kimi_dep_kimi-k2.7-code_20261231")).toBe(true);
   });
 
   it("extracts dated changelog events and merges full catalog offline", async () => {
@@ -133,6 +178,12 @@ describe("Provider registry and 5 official adapters", () => {
       if (parsedUrl.hostname === "api-docs.deepseek.com" && parsedUrl.pathname === "/updates") {
         return new Response(fixture("deepseek-updates.sample.html"), { status: 200 });
       }
+      if (parsedUrl.hostname === "platform.kimi.ai" && parsedUrl.pathname === "/docs/models.md") {
+        return new Response(
+          "## Multi-modal Model\n| Model Name | Description |\n| - | - |\n| `kimi-k3.1-pro` | 1M context. |\n",
+          { status: 200 },
+        );
+      }
       if (parsedUrl.hostname === "platform.kimi.ai" && parsedUrl.pathname === "/docs/llms.txt") {
         return new Response(
           "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) 1M context.",
@@ -149,5 +200,43 @@ describe("Provider registry and 5 official adapters", () => {
     const opus = result.snapshot.models.find((m) => m.canonical_id === "claude-opus-5-5");
     expect(opus?.context_window).toBe(1000000);
     expect(opus?.source_origin).toBe("live_verified");
+
+    // Mention-authority patch must not overwrite existing catalog shutdown_date or official_url
+    const kimiFallback = await ingestFullCatalog({
+      now: () => new Date("2026-11-26T08:00:00Z"),
+      fetchImpl: async (input) => {
+        const u = new URL(String(input));
+        if (u.hostname === "raw.githubusercontent.com") {
+          return new Response(
+            JSON.stringify({
+              "moonshot-v1-8k": {
+                litellm_provider: "moonshot",
+                deprecation_date: "2026-08-31",
+                max_input_tokens: 8192,
+              },
+            }),
+            { status: 200 },
+          );
+        }
+        if (u.hostname === "platform.kimi.ai" && u.pathname === "/docs/llms.txt") {
+          return new Response("Legacy moonshot-v1-8k reference.", { status: 200 });
+        }
+        return new Response("", { status: 404 });
+      },
+    });
+    const moonshot = kimiFallback.snapshot.models.find((m) => m.canonical_id === "moonshot-v1-8k");
+    expect(moonshot?.status).toBe("deprecated");
+    expect(moonshot?.shutdown_date).toBe("2026-08-31");
+    expect(moonshot?.official_url).toContain("litellm");
+    expect(moonshot?.source_origin).toBe("catalog_only");
+    expect(kimiFallback.snapshot.events.every((e) => e.published_at <= "2026-11-26")).toBe(true);
+
+    const rssFiltered = parseLiteLlmChangelogRss(
+      "<rss><channel><item><title>AIHubMix adds gpt-5.4</title><description>gpt-5.4 via AIHubMix</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item><item><title>Azure OpenAI gpt-4o update</title><description>Azure OpenAI update</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item><item><title>OpenAI GPT-5.4 support</title><description>Direct gpt-5.4 pricing added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item></channel></rss>",
+      "2026-11-26T08:00:00Z",
+    );
+    expect(rssFiltered).toHaveLength(1);
+    expect(rssFiltered[0]?.confidence).toBe("low");
+    expect(rssFiltered[0]?.models_affected).toEqual(["gpt-5.4"]);
   });
 });

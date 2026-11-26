@@ -3,6 +3,8 @@ import { dirname, join } from "node:path";
 import { type CatalogSnapshot, CatalogSnapshotSchema } from "../schema/models.js";
 import { getBundledSeedPath, getSnapshotCachePath } from "./paths.js";
 
+export const CACHE_PACKAGE_VERSION = "0.1.3";
+
 export interface HttpCacheMetadata {
   etag: string | null;
   lastModified: string | null;
@@ -11,6 +13,7 @@ export interface HttpCacheMetadata {
 
 export interface PersistedCacheEnvelope {
   schema_version: "1.0.0";
+  package_version?: string;
   cached_at: string;
   ttl_seconds: number;
   sources: Record<string, HttpCacheMetadata>;
@@ -21,17 +24,25 @@ export interface CacheStoreOptions {
   cacheFilePath?: string;
   seedFilePath?: string;
   ttlSeconds?: number;
+  failureCooldownMs?: number;
   now?: () => Date;
   offlineFallback?: boolean;
 }
 
 const DEFAULT_TTL_SECONDS = 10_800; // 3 hours
+const DEFAULT_FAILURE_COOLDOWN_MS = 300_000; // 5 minutes
 
 export class CatalogCacheStore {
   private memoryEnvelope: PersistedCacheEnvelope | null = null;
+  private inFlightRefresh: Promise<{
+    snapshot: CatalogSnapshot;
+    sources: Record<string, HttpCacheMetadata>;
+  }> | null = null;
+  private lastFailureAtMs: number | null = null;
   private readonly cacheFilePath: string;
   private readonly seedFilePath: string;
   private readonly ttlSeconds: number;
+  private readonly failureCooldownMs: number;
   private readonly now: () => Date;
   private readonly offlineFallback: boolean;
 
@@ -41,6 +52,7 @@ export class CatalogCacheStore {
     const envTtl = Number.parseInt(process.env.MODELCANON_TTL_SECONDS ?? "", 10);
     this.ttlSeconds =
       options.ttlSeconds ?? (Number.isFinite(envTtl) && envTtl > 0 ? envTtl : DEFAULT_TTL_SECONDS);
+    this.failureCooldownMs = options.failureCooldownMs ?? DEFAULT_FAILURE_COOLDOWN_MS;
     this.now = options.now ?? (() => new Date());
     this.offlineFallback =
       options.offlineFallback ?? process.env.MODELCANON_OFFLINE_FALLBACK === "1";
@@ -71,6 +83,7 @@ export class CatalogCacheStore {
     const validatedSnapshot = CatalogSnapshotSchema.parse(snapshot);
     const envelope: PersistedCacheEnvelope = {
       schema_version: "1.0.0",
+      package_version: CACHE_PACKAGE_VERSION,
       cached_at: this.now().toISOString(),
       ttl_seconds: this.ttlSeconds,
       sources,
@@ -119,11 +132,18 @@ export class CatalogCacheStore {
     }
   }
 
+  async drain(): Promise<void> {
+    if (this.inFlightRefresh) {
+      await this.inFlightRefresh.catch(() => undefined);
+    }
+  }
+
   async resolveSnapshot(options: {
     refresh: (
       previousSources: Record<string, HttpCacheMetadata>,
     ) => Promise<{ snapshot: CatalogSnapshot; sources: Record<string, HttpCacheMetadata> }>;
     revalidateBudgetMs?: number;
+    mode?: "server" | "cli";
   }): Promise<CatalogSnapshot> {
     const cached = this.readEnvelope();
     if (cached && !this.isExpired(cached)) {
@@ -131,19 +151,65 @@ export class CatalogCacheStore {
     }
 
     const seed = cached?.snapshot ?? this.readBundledSeed();
-    const budgetMs = options.revalidateBudgetMs ?? 1_500;
-    const previousSources = cached?.sources ?? {};
 
+    if (
+      options.mode !== "cli" &&
+      this.lastFailureAtMs !== null &&
+      this.now().getTime() - this.lastFailureAtMs < this.failureCooldownMs &&
+      seed
+    ) {
+      return { ...seed, stale: true };
+    }
+
+    if (!this.inFlightRefresh) {
+      const previousSources = cached?.sources ?? {};
+      const pending = options
+        .refresh(previousSources)
+        .then((refreshed) => {
+          const { envelope } = this.writeEnvelope(refreshed.snapshot, refreshed.sources);
+          this.lastFailureAtMs = null;
+          return {
+            snapshot: { ...envelope.snapshot, stale: false },
+            sources: envelope.sources,
+          };
+        })
+        .catch((err) => {
+          this.lastFailureAtMs = this.now().getTime();
+          throw err;
+        })
+        .finally(() => {
+          if (this.inFlightRefresh === pending) {
+            this.inFlightRefresh = null;
+          }
+        });
+      // Prevent unhandledRejection if background refresh fails after server timeout
+      pending.catch(() => undefined);
+      this.inFlightRefresh = pending;
+    }
+
+    if (options.mode === "cli") {
+      try {
+        const res = await this.inFlightRefresh;
+        return { ...res.snapshot, stale: false };
+      } catch {
+        if (seed) {
+          return { ...seed, stale: true };
+        }
+        throw new Error("No cached catalog, bundled seed, or reachable upstream available.");
+      }
+    }
+
+    const budgetMs = options.revalidateBudgetMs ?? 1_500;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const refreshed = await Promise.race([
-        options.refresh(previousSources),
+        this.inFlightRefresh,
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => reject(new Error("Revalidation budget exceeded")), budgetMs);
+          timer.unref?.();
         }),
       ]);
-      const { envelope } = this.writeEnvelope(refreshed.snapshot, refreshed.sources);
-      return { ...envelope.snapshot, stale: false };
+      return { ...refreshed.snapshot, stale: false };
     } catch {
       if (seed) {
         return { ...seed, stale: true };
@@ -161,6 +227,7 @@ function isValidEnvelope(value: unknown): value is PersistedCacheEnvelope {
   if (value === null || typeof value !== "object") return false;
   const candidate = value as Record<string, unknown>;
   if (candidate.schema_version !== "1.0.0") return false;
+  if (candidate.package_version !== CACHE_PACKAGE_VERSION) return false;
   if (typeof candidate.cached_at !== "string") return false;
   if (typeof candidate.ttl_seconds !== "number") return false;
   const snap = CatalogSnapshotSchema.safeParse(candidate.snapshot);

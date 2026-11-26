@@ -70,6 +70,13 @@ export function parseClaudeDeprecations(
         });
 
         if (retDate) {
+          const todayIso = detectedAt.slice(0, 10);
+          const publishedAt =
+            existing?.deprecation_date && existing.deprecation_date <= todayIso
+              ? existing.deprecation_date
+              : retDate <= todayIso
+                ? retDate
+                : todayIso;
           events.push({
             id: `evt_claude_dep_${depId}_${retDate.replace(/-/g, "")}`,
             slug: `claude-${depId}-retirement-${retDate}`,
@@ -82,7 +89,8 @@ export function parseClaudeDeprecations(
             agent_summary: `${depId} retirement date is ${retDate}; recommended replacement: ${repId ?? "see docs"}.`,
             evidence_quote: `| ${retDate} | ${depId} | ${repId ?? "N/A"} |`,
             source_url: CLAUDE_DEPRECATIONS_URL,
-            published_at: retDate,
+            published_at: publishedAt,
+            effective_date: retDate,
             detected_at: detectedAt,
           });
         }

@@ -38,6 +38,16 @@ function extractFetcherVersion(content) {
   return match?.[1] ?? null;
 }
 
+function extractCacheVersion(content) {
+  const match = /export const CACHE_PACKAGE_VERSION = "([^"]+)";/m.exec(content);
+  return match?.[1] ?? null;
+}
+
+function extractDockerfileVersion(content) {
+  const match = /org\.opencontainers\.image\.version="([^"]+)"/m.exec(content);
+  return match?.[1] ?? null;
+}
+
 function readVersionSurfaces() {
   const pkg = readJson("package.json");
   const lock = readJson("package-lock.json");
@@ -47,6 +57,8 @@ function readVersionSurfaces() {
   const cli = readFileSync(resolve(ROOT_DIR, "src/cli.ts"), "utf8");
   const mcpServer = readFileSync(resolve(ROOT_DIR, "src/mcp/server.ts"), "utf8");
   const fetcher = readFileSync(resolve(ROOT_DIR, "src/http/fetcher.ts"), "utf8");
+  const cache = readFileSync(resolve(ROOT_DIR, "src/store/cache.ts"), "utf8");
+  const dockerfile = readFileSync(resolve(ROOT_DIR, "Dockerfile"), "utf8");
 
   return {
     "package.json": pkg.version ?? null,
@@ -61,6 +73,8 @@ function readVersionSurfaces() {
     "src/cli.ts": extractCliVersion(cli),
     "src/mcp/server.ts": extractMcpServerVersion(mcpServer),
     "src/http/fetcher.ts": extractFetcherVersion(fetcher),
+    "src/store/cache.ts": extractCacheVersion(cache),
+    Dockerfile: extractDockerfileVersion(dockerfile),
   };
 }
 
@@ -89,7 +103,7 @@ function checkVersionParity() {
     throw new Error(`Version parity check failed:\n- ${mismatches.join("\n- ")}`);
   }
 
-  process.stdout.write(`[OK] All 8 version surfaces match ${target}.\n`);
+  process.stdout.write(`[OK] All 10 version surfaces match ${target}.\n`);
 }
 
 function syncVersions(targetVersion) {
@@ -156,7 +170,23 @@ function syncVersions(targetVersion) {
     "utf8",
   );
 
-  process.stdout.write(`[OK] Synchronized all 8 surfaces to ${targetVersion}.\n`);
+  const cachePath = resolve(ROOT_DIR, "src/store/cache.ts");
+  const cache = readFileSync(cachePath, "utf8");
+  writeFileSync(
+    cachePath,
+    cache.replace(/(export const CACHE_PACKAGE_VERSION = ")[^"]+(";)/m, `$1${targetVersion}$2`),
+    "utf8",
+  );
+
+  const dockerfilePath = resolve(ROOT_DIR, "Dockerfile");
+  const dockerfile = readFileSync(dockerfilePath, "utf8");
+  writeFileSync(
+    dockerfilePath,
+    dockerfile.replace(/(org\.opencontainers\.image\.version=")[^"]+(")/m, `$1${targetVersion}$2`),
+    "utf8",
+  );
+
+  process.stdout.write(`[OK] Synchronized all 10 surfaces to ${targetVersion}.\n`);
 }
 
 const args = process.argv.slice(2);

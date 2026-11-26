@@ -10,14 +10,14 @@ function readJson(relPath: string): Record<string, unknown> {
 }
 
 describe("Multiplatform packaging, version parity, and registry manifests", () => {
-  it("aligns server.json, package.json, glama.json, smithery.yaml, and Dockerfile at 0.1.2", () => {
+  it("aligns server.json, package.json, glama.json, smithery.yaml, and Dockerfile at 0.1.3", () => {
     const pkg = readJson("package.json");
     const server = readJson("server.json");
     const glama = readJson("glama.json");
     const smithery = readFileSync(resolve(ROOT, "smithery.yaml"), "utf8");
 
     expect(pkg.name).toBe("@digital-lake/modelcanon");
-    expect(pkg.version).toBe("0.1.2");
+    expect(pkg.version).toBe("0.1.3");
     expect(pkg.mcpName).toBe("io.github.digital-lake-ai/modelcanon");
     expect(pkg.os).toEqual(["darwin", "linux", "win32"]);
     expect(pkg.keywords).toEqual(
@@ -39,13 +39,13 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
     const pyMain = readFileSync(resolve(ROOT, "python/modelcanon_mcp/__main__.py"), "utf8");
 
     expect(pyproject).toContain('name = "modelcanon-mcp"');
-    expect(pyproject).toContain('version = "0.1.2"');
+    expect(pyproject).toContain('version = "0.1.3"');
     expect(pyproject).toContain('"Operating System :: MacOS"');
     expect(pyproject).toContain('"Operating System :: Microsoft :: Windows"');
     expect(pyproject).toContain('"Operating System :: POSIX :: Linux"');
     expect(pyproject).toContain("HorchataHTML");
     expect(pyproject).toContain("Digital Lake");
-    expect(pyInit).toContain('__version__ = "0.1.2"');
+    expect(pyInit).toContain('__version__ = "0.1.3"');
     expect(pyInit).toContain('"npx.cmd"');
     expect(pyInit).toContain("shell=False");
     expect(pyMain).toContain("main_mcp()");
@@ -80,7 +80,7 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
         encoding: "utf8",
       },
     );
-    expect(out).toContain("0.1.2");
+    expect(out).toContain("0.1.3");
 
     const releaseYml = readFileSync(resolve(ROOT, ".github/workflows/release.yml"), "utf8");
     expect(existsSync(resolve(ROOT, "scripts/publish-release.mjs"))).toBe(true);

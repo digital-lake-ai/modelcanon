@@ -21,6 +21,7 @@ import type { HttpCacheMetadata } from "../store/cache.js";
 export interface ProviderModelPatch {
   canonical_id: string;
   provider: ProviderId;
+  authority?: "explicit" | "mention";
   aliases?: string[];
   display_name?: string;
   status?: ModelStatus;
@@ -301,12 +302,26 @@ export function stripMarkdownNoise(text: string): string {
   return stripHtmlToText(noLinks, false).replace(/\s+/g, " ").trim();
 }
 
-export function extractModelIds(text: string): string[] {
+export function extractModelIds(text: string, options?: { limit?: number }): string[] {
+  const limit = options?.limit ?? 8;
+  const sanitized = text.replace(/\[([^\]]*)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, " ");
   const matches =
-    text.match(
-      /\b(?:gemini-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
+    sanitized.match(
+      /\b(?:gemini-[a-z0-9._-]+|gemma-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
     ) ?? [];
-  return [...new Set(matches.map((m) => m.toLowerCase()))].slice(0, 8);
+  const filtered = matches
+    .map((m) => m.toLowerCase().replace(/[.,;:]+$/, ""))
+    .filter(
+      (id) =>
+        id.length > 0 &&
+        !/\.(?:md|mdx|txt|html?|json|xml|ya?ml|pdf|png|svg|js|ts|py)$/i.test(id) &&
+        !/-(?:quickstart|guide|guides|overview|docs|doc|best-practice|best-practices|tutorial|faq|cli|api-key)$/i.test(
+          id,
+        ) &&
+        !/^(?:kimi-api|kimi-vision-model|gemini-api|claude-code)$/i.test(id),
+    );
+  const unique = [...new Set(filtered)];
+  return Number.isFinite(limit) ? unique.slice(0, limit) : unique;
 }
 
 export function classifyUpdateText(text: string): {
@@ -458,19 +473,41 @@ export async function ingestFullCatalog(options?: {
           ...existing.api_constraints,
           ...(patch.api_constraints ?? []),
         ]);
-        modelMap.set(key, {
-          ...existing,
-          aliases: [...mergedAliases],
-          display_name: patch.display_name ?? existing.display_name,
-          status: patch.status ?? existing.status,
-          deprecation_date: patch.deprecation_date ?? existing.deprecation_date,
-          shutdown_date: patch.shutdown_date ?? existing.shutdown_date,
-          replacement_id: patch.replacement_id ?? existing.replacement_id,
-          api_constraints: [...mergedConstraints],
-          official_url: patch.official_url,
-          source_origin: "live_verified",
-          last_verified_at: generatedAt,
-        });
+        const authority = patch.authority ?? "explicit";
+
+        if (authority === "mention") {
+          modelMap.set(key, {
+            ...existing,
+            aliases: [...mergedAliases],
+            display_name: patch.display_name ?? existing.display_name,
+            api_constraints: [...mergedConstraints],
+            last_verified_at: generatedAt,
+          });
+        } else {
+          const isExplicitActive =
+            (patch.status ?? "active") === "active" &&
+            !patch.deprecation_date &&
+            !patch.shutdown_date;
+          modelMap.set(key, {
+            ...existing,
+            aliases: [...mergedAliases],
+            display_name: patch.display_name ?? existing.display_name,
+            status: isExplicitActive ? "active" : (patch.status ?? existing.status),
+            deprecation_date: isExplicitActive
+              ? null
+              : (patch.deprecation_date ?? existing.deprecation_date),
+            shutdown_date: isExplicitActive
+              ? null
+              : (patch.shutdown_date ?? existing.shutdown_date),
+            replacement_id: isExplicitActive
+              ? null
+              : (patch.replacement_id ?? existing.replacement_id),
+            api_constraints: [...mergedConstraints],
+            official_url: patch.official_url,
+            source_origin: "live_verified",
+            last_verified_at: generatedAt,
+          });
+        }
       }
     }
   }

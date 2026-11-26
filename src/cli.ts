@@ -6,7 +6,7 @@ import { ingestFullCatalog } from "./registry/providers.js";
 import { CatalogCacheStore } from "./store/cache.js";
 
 export function getCliVersion(): string {
-  return "0.1.2";
+  return "0.1.3";
 }
 
 function printHelp(): void {
@@ -52,6 +52,7 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<nu
     const asJson = rest.includes("--json");
     const store = new CatalogCacheStore();
     const snapshot = await store.resolveSnapshot({
+      mode: "cli",
       refresh: (previousSources) => ingestFullCatalog({ previousSources }),
     });
     const result = auditModelId(snapshot, modelId);
