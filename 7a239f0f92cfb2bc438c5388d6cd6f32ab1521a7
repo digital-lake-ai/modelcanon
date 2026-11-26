@@ -1,0 +1,33 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-26T20:06:43.968Z",
+  "issue": {
+    "id": 22,
+    "title": "fix(catalog): enforce first-party RSS allowlist, generational base-model ranking, and release v0.1.4",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T2",
+    "title": "Enforce linear first-party platform allowlist and strict event classification in LiteLLM RSS",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/enrichers/litellm.ts",
+        "tests/providers.test.ts",
+        "tests/ingest.test.ts",
+        "tests/fixtures/litellm-rss.sample.xml"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npx vitest run tests/providers.test.ts tests/ingest.test.ts && npx biome check --error-on-warnings .",
+      "assignee": "gemini/4-hydrogen (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 63
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/4-hydrogen (antigravity)"
+}
