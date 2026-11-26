@@ -1,0 +1,37 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T09:33:24.141Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T11",
+    "title": "Add English OSS governance suite, issue forms, and CI hygiene assertions",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        ".github/ISSUE_TEMPLATE/model-discrepancy.yml",
+        "package.json",
+        "SECURITY.md",
+        "CONTRIBUTING.md",
+        "CODE_OF_CONDUCT.md",
+        "NOTICE.md",
+        "README.md",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npm run lint && npm test && npm run publish:preflight",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
