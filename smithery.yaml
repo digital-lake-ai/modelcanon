@@ -1,0 +1,13 @@
+# Smithery configuration for ModelCanon MCP Server
+# https://smithery.ai/docs/config
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+  commandFunction:
+    command: "npx"
+    args:
+      - "-y"
+      - "@digital-lake/modelcanon"

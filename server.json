@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.digital-lake-ai/modelcanon",
+  "title": "ModelCanon",
+  "description": "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi.",
+  "repository": {
+    "url": "https://github.com/digital-lake-ai/modelcanon",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/digital-lake-ai/modelcanon#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@digital-lake/modelcanon",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "npx"
+    },
+    {
+      "registryType": "pypi",
+      "identifier": "modelcanon-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "uvx"
+    }
+  ]
+}
