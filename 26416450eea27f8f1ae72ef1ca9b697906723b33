@@ -1,0 +1,36 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T07:52:57.737Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T2",
+    "title": "Conditional HTTP fetcher, atomic cache and catalog enrichers",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/http/fetcher.ts",
+        "src/store/paths.ts",
+        "src/store/cache.ts",
+        "src/enrichers/models-dev.ts",
+        "src/enrichers/litellm.ts",
+        "src/enrichers/native-models.ts",
+        "tests/fixtures/**",
+        "tests/ingest.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm run build && npx vitest run tests/ingest.test.ts",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
