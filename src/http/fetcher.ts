@@ -77,7 +77,7 @@ export async function fetchResource(
 
   let currentUrl = assertAllowedUrl(url, allowHttpForTests);
   let requestHeaders: Record<string, string> = {
-    "User-Agent": "ModelCanon/0.1.0 (+https://github.com/digital-lake-ai/modelcanon)",
+    "User-Agent": "ModelCanon/0.1.1 (+https://github.com/digital-lake-ai/modelcanon)",
     ...options.headers,
   };
   if (options.accept) {

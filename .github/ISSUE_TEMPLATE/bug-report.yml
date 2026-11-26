@@ -12,7 +12,7 @@ body:
     attributes:
       label: ModelCanon Version
       description: Output of `npx @digital-lake/modelcanon --version`
-      placeholder: "0.1.0"
+      placeholder: "0.1.1"
     validations:
       required: true
   - type: dropdown
@@ -23,7 +23,9 @@ body:
         - Node.js (npx) on Linux
         - Node.js (npx) on macOS
         - Node.js (npx) on Windows
-        - Python (uvx)
+        - Python (uvx) on Linux
+        - Python (uvx) on macOS
+        - Python (uvx) on Windows
         - Docker
     validations:
       required: true
