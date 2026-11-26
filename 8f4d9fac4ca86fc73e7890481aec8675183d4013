@@ -1,0 +1,30 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T11:39:25.989Z",
+  "issue": {
+    "id": 10,
+    "title": "fix(ci): export new_version to GITHUB_OUTPUT in release.yml",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T1",
+    "title": "Export new_version to GITHUB_OUTPUT in release workflow",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        ".github/workflows/release.yml",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
