@@ -38,12 +38,38 @@ export function parseDeepSeekUpdatesHtml(
 
     const title = currentTitle ?? text.slice(0, 85);
     const { category, severity } = classifyUpdateText(`${title} ${text}`);
-    const models = extractModelIds(`${title} ${text}`);
+    const detectedIso = detectedAt.slice(0, 10);
+
+    for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+      if (!/\b(discontinu\w*|deprecat\w*|retir\w*|shut\s*down)\b/i.test(sentence)) continue;
+      const isoMatch = /\b(20\d{2}-\d{2}-\d{2})\b/.exec(sentence);
+      if (!isoMatch) continue;
+      const shutdownIso = isoMatch[1];
+      const isRetired = shutdownIso <= detectedIso;
+      for (const id of extractModelIds(sentence, { limit: Number.POSITIVE_INFINITY })) {
+        const existing = modelMap.get(id);
+        if (!existing || existing.authority !== "explicit") {
+          modelMap.set(id, {
+            canonical_id: id,
+            provider: "deepseek",
+            authority: "explicit",
+            status: isRetired ? "retired" : "deprecated",
+            deprecation_date: null,
+            shutdown_date: shutdownIso,
+            replacement_id: null,
+            official_url: DEEPSEEK_UPDATES_URL,
+          });
+        }
+      }
+    }
+
+    const models = extractModelIds(`${title} ${text}`, { limit: Number.POSITIVE_INFINITY });
     for (const id of models) {
       if (!modelMap.has(id)) {
         modelMap.set(id, {
           canonical_id: id,
           provider: "deepseek",
+          authority: "mention",
           status: "active",
           official_url: DEEPSEEK_UPDATES_URL,
         });

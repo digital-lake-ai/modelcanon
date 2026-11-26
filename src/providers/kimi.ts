@@ -75,6 +75,7 @@ export function parseKimiDocs(
           byId.set(id, {
             canonical_id: id,
             provider: "kimi",
+            authority: "explicit",
             status: isDeprecatedSection ? "deprecated" : "active",
             deprecation_date: null,
             shutdown_date: shutdownDate,
@@ -116,6 +117,7 @@ export function parseKimiDocs(
       byId.set(id, {
         canonical_id: id,
         provider: "kimi",
+        authority: "mention",
         status: "active",
         api_constraints: constraintsFor(id),
         official_url: KIMI_PRICING_MD_URL,

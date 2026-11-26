@@ -70,11 +70,23 @@ describe("Provider registry and 5 official adapters", () => {
     expect(deepseek.models[0]?.canonical_id).toBe("deepseek-flash");
 
     const sanitizedDeepseek = parseDeepSeekUpdatesHtml(
+      "<article><p>Date: 2026-11-13</p><h2>Safe title</h2><script>alert(1)</script><p>The deepseek-v4-pro model replaces legacy models. The two legacy API model names, deepseek-chat and deepseek-reasoner, will be discontinued in three months (2026-07-24).</p></article>",
+      "2026-11-26T08:00:00Z",
+    );
+    expect(
+      sanitizedDeepseek.models.find((m) => m.canonical_id === "deepseek-v4-pro")?.authority,
+    ).toBe("mention");
+    const dsChat = sanitizedDeepseek.models.find((m) => m.canonical_id === "deepseek-chat");
+    expect(dsChat?.authority).toBe("explicit");
+    expect(dsChat?.status).toBe("retired");
+    expect(dsChat?.shutdown_date).toBe("2026-07-24");
+
+    const sanitizedEntityDeepseek = parseDeepSeekUpdatesHtml(
       "<article><p>Date: 2026-11-13</p><h2>Safe title</h2><script>alert(1)</script><p>The deepseek-flash model supports &amp;lt;tag&amp;gt; cleanly in API.</p></article>",
       "2026-11-26T08:00:00Z",
     );
-    expect(sanitizedDeepseek.events[0]?.agent_summary).not.toContain("alert(1)");
-    expect(sanitizedDeepseek.events[0]?.agent_summary).toContain("&lt;tag&gt;");
+    expect(sanitizedEntityDeepseek.events[0]?.agent_summary).not.toContain("alert(1)");
+    expect(sanitizedEntityDeepseek.events[0]?.agent_summary).toContain("&lt;tag&gt;");
 
     const kimi = parseKimiDocs(
       "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) with 1M context.\n- [Kimi API Docs](https://platform.kimi.ai/docs/guide/kimi-api.md): Guide.",
@@ -175,5 +187,34 @@ describe("Provider registry and 5 official adapters", () => {
     const opus = result.snapshot.models.find((m) => m.canonical_id === "claude-opus-5-5");
     expect(opus?.context_window).toBe(1000000);
     expect(opus?.source_origin).toBe("live_verified");
+
+    // Mention-authority patch must not overwrite existing catalog shutdown_date or official_url
+    const kimiFallback = await ingestFullCatalog({
+      now: () => new Date("2026-11-26T08:00:00Z"),
+      fetchImpl: async (input) => {
+        const u = new URL(String(input));
+        if (u.hostname === "raw.githubusercontent.com") {
+          return new Response(
+            JSON.stringify({
+              "moonshot-v1-8k": {
+                litellm_provider: "moonshot",
+                deprecation_date: "2026-08-31",
+                max_input_tokens: 8192,
+              },
+            }),
+            { status: 200 },
+          );
+        }
+        if (u.hostname === "platform.kimi.ai" && u.pathname === "/docs/llms.txt") {
+          return new Response("Legacy moonshot-v1-8k reference.", { status: 200 });
+        }
+        return new Response("", { status: 404 });
+      },
+    });
+    const moonshot = kimiFallback.snapshot.models.find((m) => m.canonical_id === "moonshot-v1-8k");
+    expect(moonshot?.status).toBe("deprecated");
+    expect(moonshot?.shutdown_date).toBe("2026-08-31");
+    expect(moonshot?.official_url).toContain("litellm");
+    expect(moonshot?.source_origin).toBe("catalog_only");
   });
 });

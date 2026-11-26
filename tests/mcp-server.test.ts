@@ -47,6 +47,25 @@ const SAMPLE_SNAPSHOT: CatalogSnapshot = {
       source_origin: "live_verified",
       last_verified_at: "2026-11-26T08:00:00Z",
     },
+    {
+      canonical_id: "claude-1.0",
+      aliases: [],
+      provider: "claude",
+      status: "deprecated",
+      deprecation_date: null,
+      shutdown_date: "2024-11-06",
+      replacement_id: "claude-opus-5-5",
+      context_window: 100000,
+      max_output_tokens: 4096,
+      supports_temperature: true,
+      supports_reasoning: false,
+      supports_tool_call: false,
+      pricing_per_1m: null,
+      api_constraints: [],
+      official_url: "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
+      source_origin: "live_verified",
+      last_verified_at: "2026-11-26T08:00:00Z",
+    },
   ],
   events: [
     {
@@ -127,6 +146,18 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
 
       const resources = await client.listResources();
       expect(resources.resources.map((r) => r.uri)).toContain("modelcanon://catalog/summary");
+
+      const upcomingRes = await client.readResource({
+        uri: "modelcanon://deprecations/upcoming",
+      });
+      const upcomingList = JSON.parse(
+        String(
+          upcomingRes.contents[0] && "text" in upcomingRes.contents[0]
+            ? upcomingRes.contents[0].text
+            : "[]",
+        ),
+      ) as Array<{ canonical_id: string; status: string }>;
+      expect(upcomingList.map((u) => u.canonical_id)).toEqual(["claude-sonnet-4-5-20250929"]);
     } finally {
       await client.close();
       await server.close();

@@ -65,6 +65,20 @@ export function computeDaysUntilUtcDate(
   return Math.round((targetMs - todayUtcMs) / 86_400_000);
 }
 
+export function resolveEffectiveStatus(
+  model: Pick<ModelRecord, "status" | "shutdown_date">,
+  now: Date = new Date(),
+): ModelRecord["status"] {
+  if (model.status === "retired") {
+    return "retired";
+  }
+  const days = computeDaysUntilUtcDate(model.shutdown_date, now);
+  if (days !== null && days <= 0) {
+    return "retired";
+  }
+  return model.status;
+}
+
 export function auditModelId(
   snapshot: CatalogSnapshot,
   modelId: string,
@@ -93,10 +107,7 @@ export function auditModelId(
   }
 
   const daysRemaining = computeDaysUntilUtcDate(matched.shutdown_date, now);
-  const resolvedStatus =
-    daysRemaining !== null && daysRemaining <= 0 && matched.status === "deprecated"
-      ? "retired"
-      : matched.status;
+  const resolvedStatus = resolveEffectiveStatus(matched, now);
 
   return {
     queried_id: modelId,
@@ -174,26 +185,29 @@ export function listActiveModels(
     includeDeprecated?: boolean;
     limit?: number;
   } = {},
+  now: Date = new Date(),
 ): { stale: boolean; total_returned: number; models: ActiveModelItem[] } {
   const provider = filters.provider ?? "all";
   const includeDeprecated = filters.includeDeprecated ?? false;
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
 
   const items = snapshot.models
-    .filter((model) => {
+    .map((model) => ({ model, effectiveStatus: resolveEffectiveStatus(model, now) }))
+    .filter(({ model, effectiveStatus }) => {
       if (provider !== "all" && model.provider !== provider) return false;
-      if (model.status === "active") return true;
-      return includeDeprecated && model.status === "deprecated";
+      if (effectiveStatus === "active") return true;
+      return includeDeprecated && effectiveStatus === "deprecated";
     })
     .sort(
       (a, b) =>
-        a.provider.localeCompare(b.provider) || a.canonical_id.localeCompare(b.canonical_id),
+        a.model.provider.localeCompare(b.model.provider) ||
+        a.model.canonical_id.localeCompare(b.model.canonical_id),
     )
     .slice(0, limit)
-    .map((model) => ({
+    .map(({ model, effectiveStatus }) => ({
       canonical_id: model.canonical_id,
       provider: model.provider,
-      status: model.status,
+      status: effectiveStatus,
       context_window: model.context_window,
       max_output_tokens: model.max_output_tokens,
       pricing_per_1m: model.pricing_per_1m,

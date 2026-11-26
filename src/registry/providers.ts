@@ -21,6 +21,7 @@ import type { HttpCacheMetadata } from "../store/cache.js";
 export interface ProviderModelPatch {
   canonical_id: string;
   provider: ProviderId;
+  authority?: "explicit" | "mention";
   aliases?: string[];
   display_name?: string;
   status?: ModelStatus;
@@ -472,19 +473,41 @@ export async function ingestFullCatalog(options?: {
           ...existing.api_constraints,
           ...(patch.api_constraints ?? []),
         ]);
-        modelMap.set(key, {
-          ...existing,
-          aliases: [...mergedAliases],
-          display_name: patch.display_name ?? existing.display_name,
-          status: patch.status ?? existing.status,
-          deprecation_date: patch.deprecation_date ?? existing.deprecation_date,
-          shutdown_date: patch.shutdown_date ?? existing.shutdown_date,
-          replacement_id: patch.replacement_id ?? existing.replacement_id,
-          api_constraints: [...mergedConstraints],
-          official_url: patch.official_url,
-          source_origin: "live_verified",
-          last_verified_at: generatedAt,
-        });
+        const authority = patch.authority ?? "explicit";
+
+        if (authority === "mention") {
+          modelMap.set(key, {
+            ...existing,
+            aliases: [...mergedAliases],
+            display_name: patch.display_name ?? existing.display_name,
+            api_constraints: [...mergedConstraints],
+            last_verified_at: generatedAt,
+          });
+        } else {
+          const isExplicitActive =
+            (patch.status ?? "active") === "active" &&
+            !patch.deprecation_date &&
+            !patch.shutdown_date;
+          modelMap.set(key, {
+            ...existing,
+            aliases: [...mergedAliases],
+            display_name: patch.display_name ?? existing.display_name,
+            status: isExplicitActive ? "active" : (patch.status ?? existing.status),
+            deprecation_date: isExplicitActive
+              ? null
+              : (patch.deprecation_date ?? existing.deprecation_date),
+            shutdown_date: isExplicitActive
+              ? null
+              : (patch.shutdown_date ?? existing.shutdown_date),
+            replacement_id: isExplicitActive
+              ? null
+              : (patch.replacement_id ?? existing.replacement_id),
+            api_constraints: [...mergedConstraints],
+            official_url: patch.official_url,
+            source_origin: "live_verified",
+            last_verified_at: generatedAt,
+          });
+        }
       }
     }
   }
