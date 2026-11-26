@@ -1,0 +1,32 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T15:16:44.994Z",
+  "issue": {
+    "id": 18,
+    "title": "chore(release): add Glama & SLSA badges, upgrade GitHub Actions to v7, and release v0.1.2",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T2",
+    "title": "Prepare CHANGELOG 0.1.2, OCI version label in Dockerfile, and runtime headers",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "CHANGELOG.md",
+        "llms.txt",
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        "Dockerfile",
+        "src/mcp/server.ts",
+        "src/http/fetcher.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run lint && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
