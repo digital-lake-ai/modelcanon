@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,7 +7,7 @@ import { parseModelsDevPayload } from "../src/enrichers/models-dev.js";
 import { fetchNativeProviderModels } from "../src/enrichers/native-models.js";
 import { FetchLimitError, fetchResource } from "../src/http/fetcher.js";
 import type { CatalogSnapshot } from "../src/schema/models.js";
-import { CatalogCacheStore } from "../src/store/cache.js";
+import { CACHE_PACKAGE_VERSION, CatalogCacheStore } from "../src/store/cache.js";
 import { getCacheDir } from "../src/store/paths.js";
 
 function fixture(name: string): string {
@@ -71,6 +71,66 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
       });
       expect(resolved.schema_version).toBe("1.0.0");
       expect(resolved.stale).toBe(false);
+
+      // Mismatched package_version envelope on disk is discarded
+      writeFileSync(
+        cachePath,
+        JSON.stringify({
+          schema_version: "1.0.0",
+          package_version: "0.0.1-old",
+          cached_at: "2026-11-26T08:00:00Z",
+          ttl_seconds: 60,
+          sources: {},
+          snapshot: sampleSnapshot,
+        }),
+        "utf8",
+      );
+      const versionCheckStore = new CatalogCacheStore({ cacheFilePath: cachePath, now });
+      expect(versionCheckStore.readEnvelope()).toBeNull();
+
+      // Deduplicated concurrent refresh + background SWR persistence + failure cooldown
+      let refreshCount = 0;
+      const slowStore = new CatalogCacheStore({
+        cacheFilePath: join(dir, "swr.json"),
+        now,
+        ttlSeconds: 3600,
+        failureCooldownMs: 60_000,
+      });
+      const slowRefresh = async () => {
+        refreshCount += 1;
+        await new Promise((r) => setTimeout(r, 80));
+        return { snapshot: sampleSnapshot, sources: {} };
+      };
+      const [r1, r2, r3] = await Promise.all([
+        slowStore.resolveSnapshot({ revalidateBudgetMs: 15, refresh: slowRefresh }),
+        slowStore.resolveSnapshot({ revalidateBudgetMs: 15, refresh: slowRefresh }),
+        slowStore.resolveSnapshot({ revalidateBudgetMs: 15, refresh: slowRefresh }),
+      ]);
+      expect(refreshCount).toBe(1);
+      expect(r1.stale).toBe(true);
+      expect(r2.stale).toBe(true);
+      expect(r3.stale).toBe(true);
+      await slowStore.drain();
+      const afterDrain = await slowStore.resolveSnapshot({ refresh: slowRefresh });
+      expect(afterDrain.stale).toBe(false);
+      expect(slowStore.readEnvelope()?.package_version).toBe(CACHE_PACKAGE_VERSION);
+
+      // Failure cooldown prevents hammering unreachable upstreams
+      let failCalls = 0;
+      const cooldownStore = new CatalogCacheStore({
+        cacheFilePath: join(dir, "cooldown.json"),
+        now,
+        failureCooldownMs: 60_000,
+      });
+      const failingRefresh = async () => {
+        failCalls += 1;
+        throw new Error("unreachable");
+      };
+      const f1 = await cooldownStore.resolveSnapshot({ refresh: failingRefresh });
+      const f2 = await cooldownStore.resolveSnapshot({ refresh: failingRefresh });
+      expect(f1.stale).toBe(true);
+      expect(f2.stale).toBe(true);
+      expect(failCalls).toBe(1);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

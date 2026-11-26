@@ -52,6 +52,7 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<nu
     const asJson = rest.includes("--json");
     const store = new CatalogCacheStore();
     const snapshot = await store.resolveSnapshot({
+      mode: "cli",
       refresh: (previousSources) => ingestFullCatalog({ previousSources }),
     });
     const result = auditModelId(snapshot, modelId);
