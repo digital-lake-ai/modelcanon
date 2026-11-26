@@ -516,7 +516,23 @@ export async function ingestFullCatalog(options?: {
     }
   }
 
-  const dedupEvents = deduplicateEvents(allEvents).sort((a, b) =>
+  const verifiedEvents =
+    modelMap.size > 0
+      ? allEvents.flatMap((evt) => {
+          if (!evt.id.startsWith("evt_litellm_")) {
+            return [evt];
+          }
+          const verifiedModels = evt.models_affected
+            .filter((id) => modelMap.has(`${evt.provider}:${id.toLowerCase()}`))
+            .slice(0, 8);
+          if (verifiedModels.length === 0) {
+            return [];
+          }
+          return [{ ...evt, models_affected: verifiedModels }];
+        })
+      : allEvents;
+
+  const dedupEvents = deduplicateEvents(verifiedEvents).sort((a, b) =>
     b.published_at.localeCompare(a.published_at),
   );
 

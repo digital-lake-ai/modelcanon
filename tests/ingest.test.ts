@@ -6,6 +6,7 @@ import { parseLiteLlmChangelogRss, parseLiteLlmPriceMap } from "../src/enrichers
 import { parseModelsDevPayload } from "../src/enrichers/models-dev.js";
 import { fetchNativeProviderModels } from "../src/enrichers/native-models.js";
 import { FetchLimitError, fetchResource } from "../src/http/fetcher.js";
+import { ingestFullCatalog } from "../src/registry/providers.js";
 import type { CatalogSnapshot } from "../src/schema/models.js";
 import { CACHE_PACKAGE_VERSION, CatalogCacheStore } from "../src/store/cache.js";
 import { getCacheDir } from "../src/store/paths.js";
@@ -252,5 +253,62 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     );
     expect(rss[0]?.agent_summary).toContain("&lt;script&gt;");
     expect(rss[0]?.agent_summary).not.toContain("<script>");
+  });
+
+  it("cross-checks evt_litellm_* models_affected against the catalog and never sends If-None-Match", async () => {
+    const seenIfNoneMatch: string[] = [];
+    const rssXml = [
+      "<rss><channel>",
+      "<item><title>4 models added on OpenAI</title><description>Added gpt-6, gpt-6.1, and gpt-6-astra-healthcare.</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+      "<item><title>Phantom model added on OpenAI</title><description>Added gpt-99-phantom only.</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+      "</channel></rss>",
+    ].join("");
+
+    const result = await ingestFullCatalog({
+      now: () => new Date("2026-11-26T08:00:00Z"),
+      previousSources: {
+        "https://models.dev/api.json": { etag: '"v1-etag"', lastModified: null, sha256: null },
+        "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json":
+          { etag: '"v1-etag"', lastModified: null, sha256: null },
+        "https://models.litellm.ai/changelog.xml": {
+          etag: '"v1-etag"',
+          lastModified: null,
+          sha256: null,
+        },
+        "https://developers.openai.com/api/docs/deprecations.md": {
+          etag: '"v1-etag"',
+          lastModified: null,
+          sha256: null,
+        },
+      },
+      fetchImpl: async (input, init) => {
+        const headers = (init?.headers ?? {}) as Record<string, string>;
+        const ifNoneMatch = headers["If-None-Match"] ?? headers["if-none-match"];
+        if (ifNoneMatch) {
+          seenIfNoneMatch.push(`${String(input)} -> ${ifNoneMatch}`);
+        }
+        const u = new URL(String(input));
+        if (u.hostname === "raw.githubusercontent.com") {
+          return new Response(
+            JSON.stringify({
+              "gpt-6-astra-healthcare": {
+                litellm_provider: "openai",
+                max_input_tokens: 128000,
+              },
+            }),
+            { status: 200 },
+          );
+        }
+        if (u.hostname === "models.litellm.ai") {
+          return new Response(rssXml, { status: 200 });
+        }
+        return new Response("", { status: 404 });
+      },
+    });
+
+    expect(seenIfNoneMatch).toEqual([]);
+    const rssEvents = result.snapshot.events.filter((e) => e.id.startsWith("evt_litellm_"));
+    expect(rssEvents).toHaveLength(1);
+    expect(rssEvents[0]?.models_affected).toEqual(["gpt-6-astra-healthcare"]);
   });
 });
