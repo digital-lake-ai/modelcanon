@@ -66,6 +66,25 @@ const SAMPLE_SNAPSHOT: CatalogSnapshot = {
       source_origin: "live_verified",
       last_verified_at: "2026-11-26T08:00:00Z",
     },
+    {
+      canonical_id: "gemini-3.8-flash",
+      aliases: [],
+      provider: "gemini",
+      status: "active",
+      deprecation_date: null,
+      shutdown_date: null,
+      replacement_id: null,
+      context_window: 1000000,
+      max_output_tokens: 65536,
+      supports_temperature: true,
+      supports_reasoning: true,
+      supports_tool_call: true,
+      pricing_per_1m: null,
+      api_constraints: [],
+      official_url: "https://ai.google.dev/gemini-api/docs",
+      source_origin: "live_verified",
+      last_verified_at: "2026-11-26T08:00:00Z",
+    },
   ],
   events: [
     {
@@ -83,6 +102,21 @@ const SAMPLE_SNAPSHOT: CatalogSnapshot = {
       source_url: "https://platform.claude.com/docs/en/about-claude/model-deprecations.md",
       published_at: "2026-09-30",
       effective_date: "2026-11-30",
+      detected_at: "2026-11-26T08:00:00Z",
+    },
+    {
+      id: "evt_future_noise",
+      slug: "future-noise",
+      provider: "gemini",
+      category: "deprecation",
+      severity: "warning",
+      confidence: "high",
+      models_affected: ["gemini-3.8-flash"],
+      title: "Future announcement should be bounded by days filter",
+      agent_summary: "Future notice test item.",
+      evidence_quote: "Future notice",
+      source_url: "https://ai.google.dev/gemini-api/docs",
+      published_at: "2028-05-14",
       detected_at: "2026-11-26T08:00:00Z",
     },
   ],
@@ -159,6 +193,35 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
         ),
       ) as Array<{ canonical_id: string; status: string }>;
       expect(upcomingList.map((u) => u.canonical_id)).toEqual(["claude-sonnet-4-5-20250929"]);
+
+      const harnessAudit = await client.callTool({
+        name: "audit_model_id",
+        arguments: { model_id: "gemini/3.8-flash-high (antigravity)" },
+      });
+      const harnessStruct = harnessAudit.structuredContent as Record<string, unknown>;
+      expect(harnessStruct.canonical_id).toBe("gemini-3.8-flash");
+      expect(harnessStruct.status).toBe("active");
+
+      const fuzzyAudit = await client.callTool({
+        name: "audit_model_id",
+        arguments: { model_id: "gemini/argon" },
+      });
+      expect((fuzzyAudit.structuredContent as Record<string, unknown>).status).toBe("unknown");
+
+      const roundRobinAll = await client.callTool({
+        name: "list_active_models",
+        arguments: { provider: "all", limit: 2 },
+      });
+      const allProviders = (
+        roundRobinAll.structuredContent as { models: Array<{ provider: string }> }
+      ).models.map((m) => m.provider);
+      expect(allProviders).toEqual(["gemini", "claude"]);
+
+      const boundedUpdates = await client.callTool({
+        name: "get_latest_updates",
+        arguments: { days: 90 },
+      });
+      expect((boundedUpdates.structuredContent as Record<string, unknown>).total_returned).toBe(1);
     } finally {
       await client.close();
       await server.close();
