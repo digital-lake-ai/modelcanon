@@ -1,0 +1,33 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T11:16:48.370Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T12",
+    "title": "Add verified GitHub/tech badges, .gitattributes LF rule, and exact URL test mocks",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        ".gitattributes",
+        "src/cli.ts",
+        "README.md",
+        "tests/ingest.test.ts",
+        "tests/providers.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npm run lint && npm run build && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
