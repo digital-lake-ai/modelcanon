@@ -1,0 +1,44 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-26T20:10:09.822Z",
+  "issue": {
+    "id": 22,
+    "title": "fix(catalog): enforce first-party RSS allowlist, generational base-model ranking, and release v0.1.4",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T6",
+    "title": "Synchronize atomic 0.1.4 version across 12 surfaces, changelog, and packaging tests",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "scripts/sync-version.mjs",
+        "package.json",
+        "package-lock.json",
+        "server.json",
+        "pyproject.toml",
+        "python/modelcanon_mcp/__init__.py",
+        "src/cli.ts",
+        "src/mcp/server.ts",
+        "src/http/fetcher.ts",
+        "src/store/cache.ts",
+        "Dockerfile",
+        "llms.txt",
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        "CHANGELOG.md",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npx biome check --error-on-warnings . && npm run build && npm run seed:check && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 39
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/3.8-flash-high (antigravity)"
+}
