@@ -1,0 +1,35 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T08:00:26.329Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T6",
+    "title": "Multiplatform distribution manifests and PyPI uvx package",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "server.json",
+        "glama.json",
+        "smithery.yaml",
+        "pyproject.toml",
+        "python/modelcanon_mcp/__init__.py",
+        "python/modelcanon_mcp/__main__.py",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run build && npx vitest run tests/packaging.test.ts",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
