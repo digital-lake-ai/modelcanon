@@ -301,12 +301,26 @@ export function stripMarkdownNoise(text: string): string {
   return stripHtmlToText(noLinks, false).replace(/\s+/g, " ").trim();
 }
 
-export function extractModelIds(text: string): string[] {
+export function extractModelIds(text: string, options?: { limit?: number }): string[] {
+  const limit = options?.limit ?? 8;
+  const sanitized = text.replace(/\[([^\]]*)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, " ");
   const matches =
-    text.match(
-      /\b(?:gemini-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
+    sanitized.match(
+      /\b(?:gemini-[a-z0-9._-]+|gemma-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
     ) ?? [];
-  return [...new Set(matches.map((m) => m.toLowerCase()))].slice(0, 8);
+  const filtered = matches
+    .map((m) => m.toLowerCase().replace(/[.,;:]+$/, ""))
+    .filter(
+      (id) =>
+        id.length > 0 &&
+        !/\.(?:md|mdx|txt|html?|json|xml|ya?ml|pdf|png|svg|js|ts|py)$/i.test(id) &&
+        !/-(?:quickstart|guide|guides|overview|docs|doc|best-practice|best-practices|tutorial|faq|cli|api-key)$/i.test(
+          id,
+        ) &&
+        !/^(?:kimi-api|kimi-vision-model|gemini-api|claude-code)$/i.test(id),
+    );
+  const unique = [...new Set(filtered)];
+  return Number.isFinite(limit) ? unique.slice(0, limit) : unique;
 }
 
 export function classifyUpdateText(text: string): {

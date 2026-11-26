@@ -77,12 +77,32 @@ describe("Provider registry and 5 official adapters", () => {
     expect(sanitizedDeepseek.events[0]?.agent_summary).toContain("&lt;tag&gt;");
 
     const kimi = parseKimiDocs(
-      "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) with 1M context.",
-      "All K3 series models support a 1,048,576-token context window.",
+      "- [Kimi K3.1 Pro](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md): Kimi K3.1 Pro (`kimi-k3.1-pro`) with 1M context.\n- [Kimi API Docs](https://platform.kimi.ai/docs/guide/kimi-api.md): Guide.",
+      "All K3 series models support a 1,048,576-token context window. Legacy `moonshot-v1-8k` (`262,144` tokens). October 31, 2026 notice.",
       "2026-11-26T08:00:00Z",
+      [
+        "## Multi-modal Model",
+        "| Model Name | Description |",
+        "| - | - |",
+        "| `kimi-k3.1-pro` | Flagship 1M-token model. |",
+        "",
+        "## Deprecated Models",
+        "| Model Name | Description |",
+        "| - | - |",
+        "| `kimi-k2.7-code` | Deprecation expected in late December 2026 |",
+        "| `moonshot-v1-8k` | Deprecated |",
+      ].join("\n"),
     );
     expect(kimi.models.some((m) => m.canonical_id === "kimi-k3.1-pro")).toBe(true);
-    expect(kimi.events.length).toBeGreaterThan(0);
+    expect(kimi.models.some((m) => m.canonical_id.endsWith(".md"))).toBe(false);
+    const k27 = kimi.models.find((m) => m.canonical_id === "kimi-k2.7-code");
+    expect(k27?.status).toBe("deprecated");
+    expect(k27?.shutdown_date).toBe("2026-12-31");
+    expect(k27?.replacement_id).toBe("kimi-k3.1-pro");
+    const moonshot = kimi.models.find((m) => m.canonical_id === "moonshot-v1-8k");
+    expect(moonshot?.api_constraints).toEqual([]);
+    expect(kimi.events.some((e) => e.id.startsWith("evt_kimi_doc_"))).toBe(false);
+    expect(kimi.events.some((e) => e.id === "evt_kimi_dep_kimi-k2.7-code_20261231")).toBe(true);
   });
 
   it("extracts dated changelog events and merges full catalog offline", async () => {
@@ -132,6 +152,12 @@ describe("Provider registry and 5 official adapters", () => {
       }
       if (parsedUrl.hostname === "api-docs.deepseek.com" && parsedUrl.pathname === "/updates") {
         return new Response(fixture("deepseek-updates.sample.html"), { status: 200 });
+      }
+      if (parsedUrl.hostname === "platform.kimi.ai" && parsedUrl.pathname === "/docs/models.md") {
+        return new Response(
+          "## Multi-modal Model\n| Model Name | Description |\n| - | - |\n| `kimi-k3.1-pro` | 1M context. |\n",
+          { status: 200 },
+        );
       }
       if (parsedUrl.hostname === "platform.kimi.ai" && parsedUrl.pathname === "/docs/llms.txt") {
         return new Response(

@@ -1,5 +1,6 @@
 import { fetchResource } from "../http/fetcher.js";
 import type { ModelRecord, ProviderId, UpdateEvent } from "../schema/models.js";
+import { isValidCatalogModelId } from "./models-dev.js";
 
 export const LITELLM_PRICES_URL =
   "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
@@ -12,6 +13,8 @@ const LITELLM_PROVIDER_MAP: Record<string, ProviderId> = {
   deepseek: "deepseek",
   moonshot: "kimi",
 };
+
+const EXCLUDED_LITELLM_MODES = new Set(["search", "rerank", "ocr", "moderation"]);
 
 interface LiteLlmRawModel {
   litellm_provider?: string;
@@ -40,12 +43,20 @@ export function parseLiteLlmPriceMap(
       : undefined;
     if (!provider) continue;
 
+    // Skip non-conversational modes (search, rerank, ocr, moderation) while preserving undefined
+    if (typeof entry.mode === "string" && EXCLUDED_LITELLM_MODES.has(entry.mode.toLowerCase())) {
+      continue;
+    }
+
     // Skip third-party proxy keys (e.g., openrouter/, azure/, vertex_ai/)
     if (rawKey.includes("/") && !rawKey.startsWith(`${entry.litellm_provider}/`)) {
       continue;
     }
 
     const canonicalId = rawKey.includes("/") ? rawKey.slice(rawKey.indexOf("/") + 1) : rawKey;
+    if (!isValidCatalogModelId(canonicalId)) {
+      continue;
+    }
     const aliases = rawKey !== canonicalId ? [rawKey] : [];
 
     const contextWindow = toPositiveIntOrNull(entry.max_input_tokens ?? entry.max_tokens);

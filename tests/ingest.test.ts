@@ -99,6 +99,18 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     expect(ltModels[0].deprecation_date).toBe("2027-01-14");
     expect(ltModels[0].pricing_per_1m).toEqual({ input_usd: 2, output_usd: 8 });
 
+    const filteredLt = parseLiteLlmPriceMap(
+      JSON.stringify({
+        search: { litellm_provider: "deepseek", mode: "search" },
+        container: { litellm_provider: "openai" },
+        "ft:gpt-3.5-turbo": { litellm_provider: "openai", mode: "chat" },
+        "gpt-5-search-api": { litellm_provider: "openai", mode: "chat" },
+        "codex-mini-latest": { litellm_provider: "openai" },
+      }),
+      "2026-11-26T08:00:00Z",
+    );
+    expect(filteredLt.map((m) => m.canonical_id)).toEqual(["codex-mini-latest"]);
+
     const rssEvents = parseLiteLlmChangelogRss(
       fixture("litellm-rss.sample.xml"),
       "2026-11-26T08:00:00Z",
