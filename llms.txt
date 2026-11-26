@@ -1,6 +1,6 @@
 # ModelCanon — Official AI Model Changelog, Deprecation & API Spec MCP Server
 
-> Deterministic, cross-platform MCP server (v0.1.3) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.
+> Deterministic, cross-platform MCP server (v0.1.4) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.
 
 ## Packages & Supported Platforms
 - npm: `@digital-lake/modelcanon` (`npx -y @digital-lake/modelcanon`)
@@ -22,7 +22,7 @@
 - Claude: `https://platform.claude.com/docs/en/about-claude/model-deprecations.md`, `https://platform.claude.com/docs/en/release-notes/overview.md`, `https://platform.claude.com/llms.txt`
 - OpenAI: `https://developers.openai.com/api/docs/deprecations.md`, `https://developers.openai.com/api/docs/changelog.md`, `https://openai.com/news/rss.xml`
 - DeepSeek: `https://api-docs.deepseek.com/updates`
-- Kimi: `https://platform.kimi.ai/docs/llms.txt`, `https://platform.moonshot.ai/docs/pricing/chat.md`
+- Kimi: `https://platform.kimi.ai/docs/llms.txt`, `https://platform.kimi.ai/docs/models.md`, `https://platform.moonshot.ai/docs/pricing/chat.md`
 - Deterministic catalog enrichers: `https://models.dev/api.json`, `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`, `https://models.litellm.ai/changelog.xml`
 
 ## Authors & License

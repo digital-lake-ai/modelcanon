@@ -48,6 +48,16 @@ function extractDockerfileVersion(content) {
   return match?.[1] ?? null;
 }
 
+function extractLlmsVersion(content) {
+  const match = /\(v(\d+\.\d+\.\d+)\)/m.exec(content);
+  return match?.[1] ?? null;
+}
+
+function extractBugTemplateVersion(content) {
+  const match = /placeholder:\s*"(\d+\.\d+\.\d+)"/m.exec(content);
+  return match?.[1] ?? null;
+}
+
 function readVersionSurfaces() {
   const pkg = readJson("package.json");
   const lock = readJson("package-lock.json");
@@ -59,6 +69,11 @@ function readVersionSurfaces() {
   const fetcher = readFileSync(resolve(ROOT_DIR, "src/http/fetcher.ts"), "utf8");
   const cache = readFileSync(resolve(ROOT_DIR, "src/store/cache.ts"), "utf8");
   const dockerfile = readFileSync(resolve(ROOT_DIR, "Dockerfile"), "utf8");
+  const llms = readFileSync(resolve(ROOT_DIR, "llms.txt"), "utf8");
+  const bugTemplate = readFileSync(
+    resolve(ROOT_DIR, ".github/ISSUE_TEMPLATE/bug-report.yml"),
+    "utf8",
+  );
 
   return {
     "package.json": pkg.version ?? null,
@@ -75,6 +90,8 @@ function readVersionSurfaces() {
     "src/http/fetcher.ts": extractFetcherVersion(fetcher),
     "src/store/cache.ts": extractCacheVersion(cache),
     Dockerfile: extractDockerfileVersion(dockerfile),
+    "llms.txt": extractLlmsVersion(llms),
+    ".github/ISSUE_TEMPLATE/bug-report.yml": extractBugTemplateVersion(bugTemplate),
   };
 }
 
@@ -103,7 +120,7 @@ function checkVersionParity() {
     throw new Error(`Version parity check failed:\n- ${mismatches.join("\n- ")}`);
   }
 
-  process.stdout.write(`[OK] All 10 version surfaces match ${target}.\n`);
+  process.stdout.write(`[OK] All 12 version surfaces match ${target}.\n`);
 }
 
 function syncVersions(targetVersion) {
@@ -186,7 +203,19 @@ function syncVersions(targetVersion) {
     "utf8",
   );
 
-  process.stdout.write(`[OK] Synchronized all 10 surfaces to ${targetVersion}.\n`);
+  const llmsPath = resolve(ROOT_DIR, "llms.txt");
+  const llms = readFileSync(llmsPath, "utf8");
+  writeFileSync(llmsPath, llms.replace(/\(v\d+\.\d+\.\d+\)/m, `(v${targetVersion})`), "utf8");
+
+  const bugTemplatePath = resolve(ROOT_DIR, ".github/ISSUE_TEMPLATE/bug-report.yml");
+  const bugTemplate = readFileSync(bugTemplatePath, "utf8");
+  writeFileSync(
+    bugTemplatePath,
+    bugTemplate.replace(/(placeholder:\s*")\d+\.\d+\.\d+(")/m, `$1${targetVersion}$2`),
+    "utf8",
+  );
+
+  process.stdout.write(`[OK] Synchronized all 12 surfaces to ${targetVersion}.\n`);
 }
 
 const args = process.argv.slice(2);
