@@ -1,0 +1,33 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.0",
+  "timestamp": "2026-11-26T09:20:55.532Z",
+  "issue": {
+    "id": 1,
+    "title": "bootstrap modelcanon",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T8",
+    "title": "Autonomous multi-registry release pipeline and preflight orchestrator",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        ".github/workflows/release.yml",
+        "scripts/publish-release.mjs",
+        "package.json",
+        "server.json",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [
+        "docs/contexto/**"
+      ],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npm run lint && npm test && npm run publish:preflight",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
