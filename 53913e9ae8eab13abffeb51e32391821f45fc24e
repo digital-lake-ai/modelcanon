@@ -1,0 +1,41 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.1",
+  "timestamp": "2026-11-26T16:49:52.852Z",
+  "issue": {
+    "id": 20,
+    "title": "fix(catalog): harden model ID hygiene, lifecycle authority, SWR cache, and release v0.1.3",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T7",
+    "title": "Synchronize atomic 0.1.3 version contract across 10 surfaces and changelog",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "scripts/sync-version.mjs",
+        "package.json",
+        "package-lock.json",
+        "server.json",
+        "pyproject.toml",
+        "python/modelcanon_mcp/__init__.py",
+        "src/cli.ts",
+        "src/mcp/server.ts",
+        "src/http/fetcher.ts",
+        "src/store/cache.ts",
+        "Dockerfile",
+        "CHANGELOG.md",
+        "llms.txt",
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npm run lint && npm run build && npm run seed:check && npm test",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    }
+  },
+  "tier": "tier-2"
+}
