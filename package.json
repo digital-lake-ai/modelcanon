@@ -2,7 +2,7 @@
   "name": "@digital-lake/modelcanon",
   "version": "0.1.0",
   "mcpName": "io.github.digital-lake-ai/modelcanon",
-  "description": "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi.",
+  "description": "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.",
   "type": "module",
   "bin": {
     "modelcanon": "dist/cli.js"
@@ -33,12 +33,25 @@
     "openai-api",
     "deepseek",
     "kimi-ai",
+    "claude-code",
+    "cursor",
+    "antigravity",
+    "linux",
+    "macos",
+    "windows",
+    "cross-platform",
     "digital-lake"
   ],
   "author": {
-    "name": "HorchataHTML (Digital Lake)",
+    "name": "Digital Lake",
     "url": "https://github.com/digital-lake-ai"
   },
+  "contributors": [
+    {
+      "name": "HorchataHTML",
+      "url": "https://github.com/HorchataHTML"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
