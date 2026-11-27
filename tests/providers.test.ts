@@ -8,6 +8,7 @@ import { parseKimiDocs } from "../src/providers/kimi.js";
 import { parseOpenAiDeprecations } from "../src/providers/openai.js";
 import {
   extractDatedChangelogEvents,
+  extractModelIds,
   getProviderAdapters,
   ingestFullCatalog,
 } from "../src/registry/providers.js";
@@ -267,5 +268,16 @@ describe("Provider registry and 5 official adapters", () => {
       effective_date: "2027-01-22",
       models_affected: ["claude-opus-4-5"],
     });
+
+    expect(
+      extractModelIds("Use grok-4.7, glm-5.3, qwen4-max, qwq-plus, or the standalone word qwen.", {
+        limit: Number.POSITIVE_INFINITY,
+      }),
+    ).toEqual(["grok-4.7", "glm-5.3", "qwen4-max", "qwq-plus"]);
+    expect(
+      extractModelIds("Gateway hosts deepseek-v4-pro alongside qwen3.6-plus and qwq-plus.", {
+        allowedPrefixes: /^(?:qwen|qwq)/i,
+      }),
+    ).toEqual(["qwen3.6-plus", "qwq-plus"]);
   });
 });

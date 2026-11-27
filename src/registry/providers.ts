@@ -306,12 +306,15 @@ export function stripMarkdownNoise(text: string): string {
   return stripHtmlToText(noLinks, false).replace(/\s+/g, " ").trim();
 }
 
-export function extractModelIds(text: string, options?: { limit?: number }): string[] {
+export function extractModelIds(
+  text: string,
+  options?: { limit?: number; allowedPrefixes?: RegExp },
+): string[] {
   const limit = options?.limit ?? 8;
   const sanitized = text.replace(/\[([^\]]*)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, " ");
   const matches =
     sanitized.match(
-      /\b(?:gemini-[a-z0-9._-]+|gemma-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
+      /\b(?:gemini-[a-z0-9._-]+|gemma-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+|grok-[a-z0-9._-]+|glm-[a-z0-9._-]+|qwen(?:\d[a-z0-9._-]*|-[a-z0-9._-]+)|qwq-[a-z0-9._-]+)\b/gi,
     ) ?? [];
   const filtered = matches
     .map((m) => m.toLowerCase().replace(/[.,;:]+$/, ""))
@@ -322,7 +325,10 @@ export function extractModelIds(text: string, options?: { limit?: number }): str
         !/-(?:quickstart|guide|guides|overview|docs|doc|best-practice|best-practices|tutorial|faq|cli|api-key)$/i.test(
           id,
         ) &&
-        !/^(?:kimi-api|kimi-vision-model|gemini-api|claude-code)$/i.test(id),
+        !/^(?:kimi-api|kimi-vision-model|gemini-api|claude-code|glm-image|glm-ocr|grok-api|qwen-api)$/i.test(
+          id,
+        ) &&
+        (!options?.allowedPrefixes || options.allowedPrefixes.test(id)),
     );
   const unique = [...new Set(filtered)];
   return Number.isFinite(limit) ? unique.slice(0, limit) : unique;

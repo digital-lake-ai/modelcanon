@@ -19,6 +19,14 @@ const KNOWN_VENDOR_PREFIXES = [
   "claude/",
   "kimi/",
   "xai/",
+  "x-ai/",
+  "zai/",
+  "z-ai/",
+  "zhipu/",
+  "zhipuai/",
+  "dashscope/",
+  "alibaba/",
+  "qwen/",
 ];
 
 const VENDOR_PREFIX_TO_PROVIDER: Record<string, string> = {
@@ -69,9 +77,20 @@ const SHORT_ALIAS_PROVIDER_MAP: Record<string, string> = {
 };
 
 const MODEL_FAMILY_PREFIX_REGEX =
-  /^(?:gemini-|gemma-|genie-|claude-|gpt-|chatgpt-|codex-|o1|o3|o4|deepseek-|kimi-|moonshot-)/;
+  /^(?:gemini-|gemma-|genie-|claude-|gpt-|chatgpt-|codex-|o1|o3|o4|deepseek-|kimi-|moonshot-|grok-|glm-|qwen(?:\d|-)|qwq-)/;
 
-const KNOWN_FAMILY_SEGMENT = new Set(["gemini", "claude", "gpt", "deepseek", "kimi", "moonshot"]);
+const KNOWN_FAMILY_SEGMENT = new Set([
+  "gemini",
+  "claude",
+  "gpt",
+  "deepseek",
+  "kimi",
+  "moonshot",
+  "grok",
+  "glm",
+  "qwen",
+  "qwq",
+]);
 
 export function stripVendorPrefix(rawId: string): string {
   const lower = rawId.trim().toLowerCase();

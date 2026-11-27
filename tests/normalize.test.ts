@@ -46,6 +46,10 @@ describe("Agnostic model ID normalization, short-alias inference, and uniqueness
     makeModel("gpt-6-astra", "openai"),
     makeModel("gpt-5.4-mini", "openai"),
     makeModel("deepseek-flash", "deepseek"),
+    makeModel("grok-4.7", "xai"),
+    makeModel("glm-5.3", "zai"),
+    makeModel("qwen4-max", "qwen"),
+    makeModel("qwen-max", "qwen"),
   ];
 
   it("classifies exact, normalized, family_inferred, and none matches deterministically", () => {
@@ -114,6 +118,35 @@ describe("Agnostic model ID normalization, short-alias inference, and uniqueness
     ).toMatchObject({
       model: { provider: "openai", canonical_id: "shared-model-1" },
       strategy: "exact",
+    });
+  });
+
+  it("normalizes xai, zai, and qwen vendor prefixes and family segments", () => {
+    expect(
+      resolveModelMatchWithStrategy("x-ai/grok-4.7-high (antigravity)", CATALOG, NOW),
+    ).toMatchObject({
+      model: { canonical_id: "grok-4.7", provider: "xai" },
+      strategy: "normalized",
+    });
+    expect(resolveModelMatchWithStrategy("grok/4.7", CATALOG, NOW)).toMatchObject({
+      model: { canonical_id: "grok-4.7", provider: "xai" },
+      strategy: "normalized",
+    });
+    expect(resolveModelMatchWithStrategy("zai/glm-5.3", CATALOG, NOW)).toMatchObject({
+      model: { canonical_id: "glm-5.3", provider: "zai" },
+      strategy: "exact",
+    });
+    expect(resolveModelMatchWithStrategy("glm/5.3", CATALOG, NOW)).toMatchObject({
+      model: { canonical_id: "glm-5.3", provider: "zai" },
+      strategy: "normalized",
+    });
+    expect(resolveModelMatchWithStrategy("dashscope/qwen4-max", CATALOG, NOW)).toMatchObject({
+      model: { canonical_id: "qwen4-max", provider: "qwen" },
+      strategy: "exact",
+    });
+    expect(resolveModelMatchWithStrategy("qwen/max", CATALOG, NOW)).toMatchObject({
+      model: { canonical_id: "qwen-max", provider: "qwen" },
+      strategy: "normalized",
     });
   });
 });
