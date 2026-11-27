@@ -85,6 +85,25 @@ const SAMPLE_SNAPSHOT: CatalogSnapshot = {
       source_origin: "live_verified",
       last_verified_at: "2026-11-26T08:00:00Z",
     },
+    {
+      canonical_id: "gemini-4-argon",
+      aliases: [],
+      provider: "gemini",
+      status: "active",
+      deprecation_date: null,
+      shutdown_date: null,
+      replacement_id: null,
+      context_window: 1000000,
+      max_output_tokens: 65536,
+      supports_temperature: true,
+      supports_reasoning: true,
+      supports_tool_call: true,
+      pricing_per_1m: null,
+      api_constraints: [],
+      official_url: "https://ai.google.dev/gemini-api/docs",
+      source_origin: "live_verified",
+      last_verified_at: "2026-11-26T08:00:00Z",
+    },
   ],
   events: [
     {
@@ -159,6 +178,7 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
       });
       const sonnetStruct = sonnetAudit.structuredContent as Record<string, unknown>;
       expect(sonnetStruct.status).toBe("deprecated");
+      expect(sonnetStruct.match_strategy).toBe("exact");
       expect(sonnetStruct.shutdown_date).toBe("2026-11-30");
       expect(sonnetStruct.replacement_id).toBe("claude-sonnet-5-5");
       expect(sonnetStruct.days_until_shutdown).toBe(4);
@@ -167,13 +187,20 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
         name: "audit_model_id",
         arguments: { model_id: "nonexistent-model-999" },
       });
-      expect((unknownAudit.structuredContent as Record<string, unknown>).status).toBe("unknown");
+      const unknownStruct = unknownAudit.structuredContent as Record<string, unknown>;
+      expect(unknownStruct.status).toBe("unknown");
+      expect(unknownStruct.match_strategy).toBe("none");
 
       const updates = await client.callTool({
         name: "get_latest_updates",
         arguments: { provider: "claude", category: "deprecation" },
       });
-      expect((updates.structuredContent as Record<string, unknown>).total_returned).toBe(1);
+      const updatesStruct = updates.structuredContent as {
+        total_returned: number;
+        updates: Array<{ effective_date: string | null }>;
+      };
+      expect(updatesStruct.total_returned).toBe(1);
+      expect(updatesStruct.updates[0]?.effective_date).toBe("2026-11-30");
 
       const active = await client.callTool({
         name: "list_active_models",
@@ -205,12 +232,24 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
       const harnessStruct = harnessAudit.structuredContent as Record<string, unknown>;
       expect(harnessStruct.canonical_id).toBe("gemini-3.8-flash");
       expect(harnessStruct.status).toBe("active");
+      expect(harnessStruct.match_strategy).toBe("normalized");
 
-      const fuzzyAudit = await client.callTool({
+      const inferredAudit = await client.callTool({
         name: "audit_model_id",
         arguments: { model_id: "gemini/argon" },
       });
-      expect((fuzzyAudit.structuredContent as Record<string, unknown>).status).toBe("unknown");
+      const inferredStruct = inferredAudit.structuredContent as Record<string, unknown>;
+      expect(inferredStruct.canonical_id).toBe("gemini-4-argon");
+      expect(inferredStruct.status).toBe("active");
+      expect(inferredStruct.match_strategy).toBe("family_inferred");
+
+      const ambiguousAudit = await client.callTool({
+        name: "audit_model_id",
+        arguments: { model_id: "gemini/flash" },
+      });
+      const ambiguousStruct = ambiguousAudit.structuredContent as Record<string, unknown>;
+      expect(ambiguousStruct.status).toBe("unknown");
+      expect(ambiguousStruct.match_strategy).toBe("none");
 
       const roundRobinAll = await client.callTool({
         name: "list_active_models",

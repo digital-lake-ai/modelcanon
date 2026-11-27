@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { MATCH_STRATEGIES } from "../domain/normalize.js";
 import { auditModelId, getLatestUpdates, listActiveModels } from "../domain/query.js";
 import {
   type CatalogSnapshot,
@@ -29,6 +30,11 @@ const AuditModelOutputShape = {
   canonical_id: z.string().nullable(),
   provider: ProviderIdSchema.nullable(),
   status: ModelStatusSchema,
+  match_strategy: z
+    .enum(MATCH_STRATEGIES)
+    .describe(
+      "How the queried identifier matched the catalog: 'exact', 'normalized', 'family_inferred', or 'none'.",
+    ),
   days_until_shutdown: z.number().int().nullable(),
   deprecation_date: z.string().nullable(),
   shutdown_date: z.string().nullable(),
@@ -87,6 +93,12 @@ const LatestUpdatesOutputShape = {
       agent_summary: z.string(),
       source_url: z.string(),
       published_at: z.string(),
+      effective_date: z
+        .string()
+        .nullable()
+        .describe(
+          "ISO-8601 date when a deprecation or retirement takes effect, or null when unspecified.",
+        ),
     }),
   ),
 };
@@ -147,7 +159,7 @@ export function registerModelCanonTools(
     {
       title: "ModelCanon Audit: Verify model lifecycle status, shutdown date and replacement",
       description:
-        "Inspect lifecycle status ('active', 'deprecated', 'retired', or 'unknown'), UTC days until shutdown, official replacement ID, parameter constraints, and context limits for a specific AI model identifier across Gemini, Claude, OpenAI, DeepSeek, and Kimi. Use when validating or updating a model ID in code or config. Not for listing all available models (use list_active_models) or browsing recent announcements (use get_latest_updates). Read-only and idempotent: requires no API keys, serves from local cache or bundled offline seed with stale=true when offline, and returns status='unknown' for unrecognized IDs.",
+        "Inspect lifecycle status ('active', 'deprecated', 'retired', or 'unknown'), UTC days until shutdown, official replacement ID, parameter constraints, and context limits for a specific AI model identifier across Gemini, Claude, OpenAI, DeepSeek, and Kimi. Includes match_strategy ('exact', 'normalized', 'family_inferred', or 'none') to distinguish literal matches from inferred short aliases. Use when validating or updating a model ID in code or config. Not for listing all available models (use list_active_models) or browsing recent announcements (use get_latest_updates). Read-only and idempotent: requires no API keys, serves from local cache or bundled offline seed with stale=true when offline, and returns status='unknown' for unrecognized IDs.",
       inputSchema: AuditModelInputShape,
       outputSchema: AuditModelOutputShape,
       annotations: READ_ONLY_ANNOTATIONS,

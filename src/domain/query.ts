@@ -6,7 +6,7 @@ import {
   type ProviderId,
   type UpdateEvent,
 } from "../schema/models.js";
-import { resolveModelMatch } from "./normalize.js";
+import { type MatchStrategy, resolveModelMatchWithStrategy } from "./normalize.js";
 import { compareModelsForListing } from "./rank.js";
 
 export interface AuditModelOutput {
@@ -14,6 +14,7 @@ export interface AuditModelOutput {
   canonical_id: string | null;
   provider: ProviderId | null;
   status: ModelRecord["status"];
+  match_strategy: MatchStrategy;
   days_until_shutdown: number | null;
   deprecation_date: string | null;
   shutdown_date: string | null;
@@ -39,6 +40,7 @@ export interface CompactUpdateItem {
   agent_summary: string;
   source_url: string;
   published_at: string;
+  effective_date: string | null;
 }
 
 export interface ActiveModelItem {
@@ -86,13 +88,14 @@ export function auditModelId(
   modelId: string,
   now: Date = new Date(),
 ): AuditModelOutput {
-  const matched = resolveModelMatch(modelId, snapshot.models);
+  const { model: matched, strategy } = resolveModelMatchWithStrategy(modelId, snapshot.models, now);
   if (!matched) {
     return {
       queried_id: modelId,
       canonical_id: null,
       provider: null,
       status: "unknown",
+      match_strategy: "none",
       days_until_shutdown: null,
       deprecation_date: null,
       shutdown_date: null,
@@ -116,6 +119,7 @@ export function auditModelId(
     canonical_id: matched.canonical_id,
     provider: matched.provider,
     status: resolvedStatus,
+    match_strategy: strategy,
     days_until_shutdown: daysRemaining,
     deprecation_date: matched.deprecation_date,
     shutdown_date: matched.shutdown_date,
@@ -203,6 +207,7 @@ export function getLatestUpdates(
       agent_summary: evt.agent_summary,
       source_url: evt.source_url,
       published_at: evt.published_at,
+      effective_date: evt.effective_date ?? null,
     }));
 
   return {
