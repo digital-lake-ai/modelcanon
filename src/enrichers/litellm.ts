@@ -310,6 +310,12 @@ function matchesProviderText(lower: string, provider: ProviderId): boolean {
       return /\bdeepseek\b/.test(lower);
     case "kimi":
       return /\b(kimi|moonshot)\b/.test(lower);
+    case "xai":
+      return /\b(grok|xai|x\.ai)\b/.test(lower);
+    case "zai":
+      return /\b(glm-|zai|z\.ai|zhipu)\b/.test(lower);
+    case "qwen":
+      return /\b(qwen|qwq|alibaba|dashscope)\b/.test(lower);
   }
 }
 

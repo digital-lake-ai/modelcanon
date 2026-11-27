@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-export const PROVIDER_IDS = ["gemini", "claude", "openai", "deepseek", "kimi"] as const;
+export const PROVIDER_IDS = [
+  "gemini",
+  "claude",
+  "openai",
+  "deepseek",
+  "kimi",
+  "xai",
+  "zai",
+  "qwen",
+] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 export const ProviderIdSchema = z.enum(PROVIDER_IDS);

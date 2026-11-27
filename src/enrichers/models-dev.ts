@@ -172,5 +172,11 @@ function defaultProviderDocUrl(provider: ProviderId): string {
       return "https://api-docs.deepseek.com/updates";
     case "kimi":
       return "https://platform.moonshot.ai/docs/pricing/chat";
+    case "xai":
+      return "https://docs.x.ai/developers/models.md";
+    case "zai":
+      return "https://docs.z.ai/guides/overview/pricing.md";
+    case "qwen":
+      return "https://www.alibabacloud.com/help/en/model-studio/models.md";
   }
 }

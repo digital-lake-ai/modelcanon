@@ -54,7 +54,7 @@ const LatestUpdatesInputShape = {
     .enum(["all", ...PROVIDER_IDS])
     .optional()
     .describe(
-      "Filter updates by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi') or 'all' (default: 'all').",
+      "Filter updates by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi', 'xai', 'zai', 'qwen') or 'all' (default: 'all').",
     ),
   days: z
     .number()
@@ -108,7 +108,7 @@ const ListActiveModelsInputShape = {
     .enum(["all", ...PROVIDER_IDS])
     .optional()
     .describe(
-      "Filter active models by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi') or 'all' (default: 'all').",
+      "Filter active models by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi', 'xai', 'zai', 'qwen') or 'all' (default: 'all').",
     ),
   include_deprecated: z
     .boolean()
@@ -159,7 +159,7 @@ export function registerModelCanonTools(
     {
       title: "ModelCanon Audit: Verify model lifecycle status, shutdown date and replacement",
       description:
-        "Inspect lifecycle status ('active', 'deprecated', 'retired', or 'unknown'), UTC days until shutdown, official replacement ID, parameter constraints, and context limits for a specific AI model identifier across Gemini, Claude, OpenAI, DeepSeek, and Kimi. Includes match_strategy ('exact', 'normalized', 'family_inferred', or 'none') to distinguish literal matches from inferred short aliases. Use when validating or updating a model ID in code or config. Not for listing all available models (use list_active_models) or browsing recent announcements (use get_latest_updates). Read-only and idempotent: requires no API keys, serves from local cache or bundled offline seed with stale=true when offline, and returns status='unknown' for unrecognized IDs.",
+        "Inspect lifecycle status ('active', 'deprecated', 'retired', or 'unknown'), UTC days until shutdown, official replacement ID, parameter constraints, and context limits for a specific AI model identifier across Gemini, Claude, OpenAI, DeepSeek, Kimi, xAI Grok, Z.ai GLM, and Alibaba Qwen. Includes match_strategy ('exact', 'normalized', 'family_inferred', or 'none') to distinguish literal matches from inferred short aliases. Use when validating or updating a model ID in code or config. Not for listing all available models (use list_active_models) or browsing recent announcements (use get_latest_updates). Read-only and idempotent: requires no API keys, serves from local cache or bundled offline seed with stale=true when offline, and returns status='unknown' for unrecognized IDs.",
       inputSchema: AuditModelInputShape,
       outputSchema: AuditModelOutputShape,
       annotations: READ_ONLY_ANNOTATIONS,
