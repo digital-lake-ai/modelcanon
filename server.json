@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.digital-lake-ai/modelcanon",
   "title": "ModelCanon",
-  "description": "Cross-platform MCP for AI model updates & deprecations (Gemini, Claude, OpenAI, DeepSeek, Kimi).",
+  "description": "Cross-platform MCP for AI model updates & deprecations: Gemini, Claude, OpenAI, Grok, Qwen & more.",
   "repository": {
     "url": "https://github.com/digital-lake-ai/modelcanon",
     "source": "github"
   },
-  "version": "0.1.4",
+  "version": "0.2.0",
   "websiteUrl": "https://github.com/digital-lake-ai/modelcanon#readme",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@digital-lake/modelcanon",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },
@@ -22,7 +22,7 @@
     {
       "registryType": "pypi",
       "identifier": "modelcanon-mcp",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },

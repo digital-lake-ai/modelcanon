@@ -6,6 +6,9 @@ import { deepseekAdapter } from "../providers/deepseek.js";
 import { geminiAdapter } from "../providers/gemini.js";
 import { kimiAdapter } from "../providers/kimi.js";
 import { openaiAdapter } from "../providers/openai.js";
+import { qwenAdapter } from "../providers/qwen.js";
+import { xaiAdapter } from "../providers/xai.js";
+import { zaiAdapter } from "../providers/zai.js";
 import type {
   CatalogSnapshot,
   ConfidenceLevel,
@@ -51,7 +54,16 @@ export interface ProviderAdapter {
 }
 
 export function getProviderAdapters(): readonly ProviderAdapter[] {
-  return [geminiAdapter, claudeAdapter, openaiAdapter, deepseekAdapter, kimiAdapter];
+  return [
+    geminiAdapter,
+    claudeAdapter,
+    openaiAdapter,
+    deepseekAdapter,
+    kimiAdapter,
+    xaiAdapter,
+    zaiAdapter,
+    qwenAdapter,
+  ];
 }
 
 export function getProviderAdapter(id: ProviderId): ProviderAdapter {
@@ -133,11 +145,14 @@ export function extractDatedChangelogEvents(
     sourceUrl: string;
     detectedAt: string;
     limit?: number;
+    forceCategory?: EventCategory;
+    allowedPrefixes?: RegExp;
   },
 ): UpdateEvent[] {
   const limit = opts.limit ?? 20;
   const lines = markdown.split(/\r?\n/);
   const events: UpdateEvent[] = [];
+  const todayIso = opts.detectedAt.slice(0, 10);
   let currentDate: string | null = null;
   let buffer: string[] = [];
 
@@ -147,8 +162,11 @@ export function extractDatedChangelogEvents(
     const cleaned = stripMarkdownNoise(rawSection);
     if (cleaned.length < 20) return;
 
-    const { category, severity, confidence } = classifyUpdateText(cleaned);
-    const models = extractModelIds(rawSection);
+    const classified = classifyUpdateText(cleaned);
+    const category = opts.forceCategory ?? classified.category;
+    const severity = opts.forceCategory === "breaking_change" ? "warning" : classified.severity;
+    const confidence = opts.forceCategory ? "high" : classified.confidence;
+    const models = extractModelIds(rawSection, { allowedPrefixes: opts.allowedPrefixes });
     const summary = firstSentence(cleaned, 220);
     const quote = firstSentence(cleaned, 200);
     const slugTail = summary
@@ -169,7 +187,7 @@ export function extractDatedChangelogEvents(
       agent_summary: summary,
       evidence_quote: quote,
       source_url: opts.sourceUrl,
-      published_at: currentDate,
+      published_at: minIsoDate(currentDate, todayIso),
       detected_at: opts.detectedAt,
     });
   };
@@ -306,12 +324,15 @@ export function stripMarkdownNoise(text: string): string {
   return stripHtmlToText(noLinks, false).replace(/\s+/g, " ").trim();
 }
 
-export function extractModelIds(text: string, options?: { limit?: number }): string[] {
+export function extractModelIds(
+  text: string,
+  options?: { limit?: number; allowedPrefixes?: RegExp },
+): string[] {
   const limit = options?.limit ?? 8;
   const sanitized = text.replace(/\[([^\]]*)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, " ");
   const matches =
     sanitized.match(
-      /\b(?:gemini-[a-z0-9._-]+|gemma-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\b/gi,
+      /\b(?:gemini-[a-z0-9._-]+|gemma-[a-z0-9._-]+|genie-\d+[a-z0-9._-]*|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+|grok-[a-z0-9._-]+|glm-[a-z0-9._-]+|qwen(?:\d[a-z0-9._-]*|-[a-z0-9._-]+)|qwq-[a-z0-9._-]+)\b/gi,
     ) ?? [];
   const filtered = matches
     .map((m) => m.toLowerCase().replace(/[.,;:]+$/, ""))
@@ -322,7 +343,10 @@ export function extractModelIds(text: string, options?: { limit?: number }): str
         !/-(?:quickstart|guide|guides|overview|docs|doc|best-practice|best-practices|tutorial|faq|cli|api-key)$/i.test(
           id,
         ) &&
-        !/^(?:kimi-api|kimi-vision-model|gemini-api|claude-code)$/i.test(id),
+        !/^(?:kimi-api|kimi-vision-model|gemini-api|claude-code|glm-image|glm-ocr|grok-api|qwen-api)$/i.test(
+          id,
+        ) &&
+        (!options?.allowedPrefixes || options.allowedPrefixes.test(id)),
     );
   const unique = [...new Set(filtered)];
   return Number.isFinite(limit) ? unique.slice(0, limit) : unique;

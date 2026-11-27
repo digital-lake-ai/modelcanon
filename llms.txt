@@ -1,6 +1,6 @@
 # ModelCanon — Official AI Model Changelog, Deprecation & API Spec MCP Server
 
-> Deterministic, cross-platform MCP server (v0.1.4) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.
+> Deterministic, cross-platform MCP server (v0.2.0) for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, Moonshot Kimi, xAI Grok, Z.ai GLM, and Alibaba Qwen on Linux, macOS, and Windows.
 
 ## Packages & Supported Platforms
 - npm: `@digital-lake/modelcanon` (`npx -y @digital-lake/modelcanon`)
@@ -9,8 +9,8 @@
 - Supported Operating Systems: Linux (`linux`), macOS (`darwin`), and Windows (`win32`) — Node.js >= 20 & Python >= 3.10
 
 ## MCP Tools (Read-Only, `outputSchema` + `structuredContent`)
-- `audit_model_id(model_id)`: Checks active/deprecated/retired/unknown status, UTC days until shutdown, official replacement ID, context/output limits, parameter constraints, and source URL.
-- `get_latest_updates(provider?, days?, category?, limit?)`: Returns compact extractive changelog and deprecation entries (`source_url` + `confidence`).
+- `audit_model_id(model_id)`: Checks active/deprecated/retired/unknown status, `match_strategy`, UTC days until shutdown, official replacement ID, context/output limits, parameter constraints, and source URL.
+- `get_latest_updates(provider?, days?, category?, limit?)`: Returns compact extractive changelog and deprecation entries (`effective_date`, `source_url`, `confidence`).
 - `list_active_models(provider?, include_deprecated?, limit?)`: Lists active (or deprecated) models with context windows, output limits, and pricing per 1M tokens.
 
 ## MCP Resources
@@ -23,6 +23,9 @@
 - OpenAI: `https://developers.openai.com/api/docs/deprecations.md`, `https://developers.openai.com/api/docs/changelog.md`, `https://openai.com/news/rss.xml`
 - DeepSeek: `https://api-docs.deepseek.com/updates`
 - Kimi: `https://platform.kimi.ai/docs/llms.txt`, `https://platform.kimi.ai/docs/models.md`, `https://platform.moonshot.ai/docs/pricing/chat.md`
+- xAI Grok: `https://docs.x.ai/developers/models.md`, `https://docs.x.ai/developers/release-notes.md`, `https://docs.x.ai/llms.txt`
+- Z.ai GLM: `https://docs.z.ai/guides/overview/pricing.md`, `https://docs.z.ai/release-notes.md`, `https://docs.z.ai/llms.txt`
+- Alibaba Qwen: `https://www.alibabacloud.com/help/en/model-studio/models.md`, `https://www.alibabacloud.com/help/en/model-studio/newly-released-models.md`, `https://www.alibabacloud.com/help/en/model-studio/api-compatibility-upgrade-notice.md`
 - Deterministic catalog enrichers: `https://models.dev/api.json`, `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`, `https://models.litellm.ai/changelog.xml`
 
 ## Authors & License

@@ -6,8 +6,12 @@ import { parseDeepSeekUpdatesHtml } from "../src/providers/deepseek.js";
 import { parseGeminiDeprecations } from "../src/providers/gemini.js";
 import { parseKimiDocs } from "../src/providers/kimi.js";
 import { parseOpenAiDeprecations } from "../src/providers/openai.js";
+import { parseQwenDocs } from "../src/providers/qwen.js";
+import { parseXaiDocs } from "../src/providers/xai.js";
+import { parseZaiDocs } from "../src/providers/zai.js";
 import {
   extractDatedChangelogEvents,
+  extractModelIds,
   getProviderAdapters,
   ingestFullCatalog,
 } from "../src/registry/providers.js";
@@ -17,13 +21,16 @@ function fixture(name: string): string {
 }
 
 describe("Provider registry and 5 official adapters", () => {
-  it("registers exactly the 5 core ModelCanon providers", () => {
+  it("registers all 8 official ModelCanon provider adapters", () => {
     expect(getProviderAdapters().map((p) => p.id)).toEqual([
       "gemini",
       "claude",
       "openai",
       "deepseek",
       "kimi",
+      "xai",
+      "zai",
+      "qwen",
     ]);
   });
 
@@ -266,6 +273,127 @@ describe("Provider registry and 5 official adapters", () => {
       category: "deprecation",
       effective_date: "2027-01-22",
       models_affected: ["claude-opus-4-5"],
+    });
+
+    expect(
+      extractModelIds("Use grok-4.7, glm-5.3, qwen4-max, qwq-plus, or the standalone word qwen.", {
+        limit: Number.POSITIVE_INFINITY,
+      }),
+    ).toEqual(["grok-4.7", "glm-5.3", "qwen4-max", "qwq-plus"]);
+    expect(
+      extractModelIds("Gateway hosts deepseek-v4-pro alongside qwen3.6-plus and qwq-plus.", {
+        allowedPrefixes: /^(?:qwen|qwq)/i,
+      }),
+    ).toEqual(["qwen3.6-plus", "qwq-plus"]);
+
+    const xaiParsed = parseXaiDocs(
+      [
+        "| Model | Context | Input / 1M tokens |",
+        "| --- | --- | --- |",
+        "| grok-4.7 (< 200k prompt tokens) | 500k | $2.00 |",
+        "| grok-4.7 (≥ 200k prompt tokens) | 500k | $4.00 |",
+        "| Speech to Speech (grok-voice-2.0) — Deprecated | - | $0.08 / min |",
+      ].join("\n"),
+      [
+        "## November",
+        "### grok-build-0.1 end of life",
+        "`grok-build-0.1` reached end of life on November 19, 2026.",
+        "### grok-voice-transcribe-1.0 end of life",
+        "All requests are routed to `grok-voice-transcribe-2.0` starting October 2, 2026.",
+        "### Month only without year",
+        "`grok-4.6` updated on November 3 without explicit year.",
+      ].join("\n"),
+      "2026-11-27T08:00:00Z",
+    );
+    const grok47 = xaiParsed.models.find((m) => m.canonical_id === "grok-4.7");
+    expect(grok47?.status).toBe("active");
+    expect(grok47?.api_constraints).toContain(
+      "Long-context tier pricing applies at >= 200k prompt tokens",
+    );
+    expect(xaiParsed.models.find((m) => m.canonical_id === "grok-voice-2.0")?.status).toBe(
+      "deprecated",
+    );
+    const grokBuild = xaiParsed.models.find((m) => m.canonical_id === "grok-build-0.1");
+    expect(grokBuild?.status).toBe("retired");
+    expect(grokBuild?.shutdown_date).toBe("2026-11-19");
+    expect(
+      xaiParsed.models.find((m) => m.canonical_id === "grok-voice-transcribe-1.0")?.replacement_id,
+    ).toBe("grok-voice-transcribe-2.0");
+    expect(xaiParsed.events).toHaveLength(2);
+
+    const zaiParsed = parseZaiDocs(
+      [
+        "| Model | Input | Output |",
+        "| :- | :- | :- |",
+        "| GLM-5.3 | \\$1.4 | \\$4.4 |",
+        "> | Model | Input | Output |",
+        "> | :- | :- | :- |",
+        "> | GLM-4.7-Flash | Free | Free |",
+        "> | GLM-Image | \\$0.015 | - |",
+      ].join("\n"),
+      [
+        "**2026-08-26**",
+        "GLM-5.3-Flash",
+        "* Native visual capabilities for UI coding workflows.",
+      ].join("\n"),
+      "2026-11-27T08:00:00Z",
+    );
+    expect(zaiParsed.models.map((m) => m.canonical_id)).toEqual([
+      "glm-5.3",
+      "glm-4.7-flash",
+      "glm-5.3-flash",
+    ]);
+    expect(zaiParsed.events[0]).toMatchObject({
+      provider: "zai",
+      category: "new_model",
+      published_at: "2026-08-26",
+      models_affected: ["glm-5.3-flash"],
+    });
+
+    const qwenParsed = parseQwenDocs(
+      [
+        "# Recommended models",
+        "<style>.rkb-ask-ai { color: red; }</style>",
+        '<CardGroup cols={3}><Card title="qwen4-max">Flagship</Card><Card title="happyoyster-1.0-acting">Roleplay</Card><Card title="qwen3-rerank">Rerank</Card></CardGroup>',
+      ].join("\n"),
+      [
+        '<Tabs><Tab title="Singapore">',
+        "### 2026-11-25",
+        "#### decision-model",
+        "Business classifier.",
+        "### 2026-11-20",
+        "#### mindlab/macaron-v1.1-venti-pro",
+        "Third-party model.",
+        "### 2026-11-16",
+        "#### qwen4-max",
+        "Flagship Qwen 4 reasoning and coding release.",
+        '</Tab><Tab title="China (Beijing)">',
+        "### 2026-11-18",
+        "#### qwen3.8-china-only",
+        "Beijing region only.",
+        "</Tab></Tabs>",
+      ].join("\n"),
+      [
+        "# API compatibility upgrades",
+        "## November 2, 2026",
+        "<table><tbody><tr><td>Align `max_tokens`</td><td>DashScope API</td><td>Starting with `qwen4-max-preview` / `qwen4-max`, `max_tokens` caps reasoning plus final answer combined.</td></tr></tbody></table>",
+      ].join("\n"),
+      "2026-11-27T08:00:00Z",
+    );
+    expect(qwenParsed.models.map((m) => m.canonical_id)).toEqual(["qwen4-max"]);
+    expect(qwenParsed.events).toHaveLength(2);
+    expect(qwenParsed.events[0]).toMatchObject({
+      provider: "qwen",
+      category: "new_model",
+      published_at: "2026-11-16",
+      models_affected: ["qwen4-max"],
+    });
+    expect(qwenParsed.events[1]).toMatchObject({
+      provider: "qwen",
+      category: "breaking_change",
+      severity: "warning",
+      published_at: "2026-11-02",
+      models_affected: ["qwen4-max-preview", "qwen4-max"],
     });
   });
 });

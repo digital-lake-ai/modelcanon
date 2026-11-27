@@ -40,7 +40,7 @@ AI coding agents and automated pipelines routinely fail due to **model lifecycle
 
 **ModelCanon provides a deterministic, citation-backed source of truth via the Model Context Protocol (MCP).** It ingests official machine-readable provider documentation without invoking any LLM at runtime:
 - **Clients:** Claude Code, Claude Desktop, Cursor, Codex, GitHub Copilot, Google Antigravity, Kimi Code, VS Code, Windsurf, Zed.
-- **Providers Tracked:** Google Gemini (`gemini`), Anthropic Claude (`claude`), OpenAI (`openai`), DeepSeek (`deepseek`), and Moonshot AI / Kimi (`kimi`).
+- **Providers Tracked:** Google Gemini (`gemini`), Anthropic Claude (`claude`), OpenAI (`openai`), DeepSeek (`deepseek`), Moonshot AI / Kimi (`kimi`), xAI Grok (`xai`), Z.ai GLM (`zai`), and Alibaba Qwen (`qwen`).
 - **Supported Platforms:** **Linux**, **macOS**, and **Windows** (`linux`, `darwin`, `win32` — 100% cross-platform Node.js `>= 20` & Python `>= 3.10` `uvx`, zero native binary dependencies, verified continuously across Ubuntu, macOS, and Windows CI runners).
 
 Every query is cited with primary official URLs and falls back instantaneously (`< 15 ms`) to a bundled offline seed snapshot (`data/seed.json`) when running inside air-gapped, sandboxed, or read-only environments.
@@ -55,7 +55,10 @@ Every query is cited with primary official URLs and falls back instantaneously (
 | **Anthropic Claude** | `claude` | `model-deprecations.md`, `release-notes/overview.md`, `llms.txt` | `ANTHROPIC_API_KEY` (`GET /v1/models`) |
 | **OpenAI** | `openai` | `deprecations.md`, `changelog.md`, `news/rss.xml` | `OPENAI_API_KEY` (`GET /v1/models`) |
 | **DeepSeek** | `deepseek` | `api-docs.deepseek.com/updates` | `DEEPSEEK_API_KEY` (`GET /models`) |
-| **Moonshot AI (Kimi)** | `kimi` | `platform.kimi.ai/docs/llms.txt`, `pricing/chat.md` | `MOONSHOT_API_KEY` (`GET /v1/models`) |
+| **Moonshot AI (Kimi)** | `kimi` | `platform.kimi.ai/docs/models.md`, `llms.txt`, `pricing/chat.md` | `MOONSHOT_API_KEY` (`GET /v1/models`) |
+| **xAI Grok** | `xai` | `docs.x.ai/developers/models.md`, `release-notes.md` | `XAI_API_KEY` (`GET /v1/models`) |
+| **Z.ai GLM** | `zai` | `docs.z.ai/guides/overview/pricing.md`, `release-notes.md` | `models.dev` / `LiteLLM` |
+| **Alibaba Qwen** | `qwen` | `model-studio/models.md`, `newly-released-models.md`, `api-compatibility-upgrade-notice.md` | `models.dev` / `DashScope` (`qwen*` / `qwq*`) |
 
 Specs, context windows, output limits, and per-1M token pricing are deterministically enriched via `models.dev/api.json` (`GET`-only) and LiteLLM's open catalog and changelog RSS. No LLMs are invoked at runtime.
 
@@ -136,6 +139,7 @@ Example `audit_model_id({ "model_id": "claude-sonnet-4-5" })`:
   "canonical_id": "claude-sonnet-4-5-20250929",
   "provider": "claude",
   "status": "deprecated",
+  "match_strategy": "exact",
   "days_until_shutdown": 4,
   "deprecation_date": "2026-09-30",
   "shutdown_date": "2026-11-30",
@@ -169,7 +173,7 @@ npx @digital-lake/modelcanon sync --json           # Refresh local JSON cache
 Install ModelCanon in your MCP client (`npx -y @digital-lake/modelcanon` or `uvx modelcanon-mcp`) and invoke `audit_model_id` with any dated or undated model ID (e.g., `claude-sonnet-4-5`, `gemini-2.5-pro`, `gpt-4.1`).
 
 **Does ModelCanon require provider API keys?**
-No. All five official provider adapters, `models.dev`, and LiteLLM operate without API keys. Setting `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, or `MOONSHOT_API_KEY` only enables optional live `GET /models` cross-checks.
+No. All eight official provider adapters, `models.dev`, and LiteLLM operate without API keys. Setting `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY`, or `XAI_API_KEY` only enables optional live `GET /models` cross-checks.
 
 **What happens if a model ID is unknown?**
 ModelCanon returns `status: "unknown"` rather than guessing `"active"`.

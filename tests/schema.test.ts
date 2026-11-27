@@ -8,8 +8,17 @@ import {
 } from "../src/schema/models.js";
 
 describe("ModelCanon Zod schemas", () => {
-  it("exposes the 5 core providers", () => {
-    expect(PROVIDER_IDS).toEqual(["gemini", "claude", "openai", "deepseek", "kimi"]);
+  it("exposes all 8 tracked providers", () => {
+    expect(PROVIDER_IDS).toEqual([
+      "gemini",
+      "claude",
+      "openai",
+      "deepseek",
+      "kimi",
+      "xai",
+      "zai",
+      "qwen",
+    ]);
   });
 
   it("accepts a valid ModelRecord and rejects corrupted Markdown URLs", () => {

@@ -2,11 +2,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { computeDaysUntilUtcDate, resolveEffectiveStatus } from "../domain/query.js";
 import { ingestFullCatalog } from "../registry/providers.js";
+import { PROVIDER_IDS } from "../schema/models.js";
 import { CatalogCacheStore } from "../store/cache.js";
 import { registerModelCanonTools, type SnapshotProviderFn } from "./tools.js";
 
 export const MCP_SERVER_NAME = "modelcanon";
-export const MCP_SERVER_VERSION = "0.1.4";
+export const MCP_SERVER_VERSION = "0.2.0";
 
 export interface CreateServerOptions {
   cacheStore?: CatalogCacheStore;
@@ -54,7 +55,7 @@ export function createModelCanonServer(options: CreateServerOptions = {}): McpSe
         stale: snapshot.stale,
         total_models: snapshot.models.length,
         total_events: snapshot.events.length,
-        providers: ["gemini", "claude", "openai", "deepseek", "kimi"],
+        providers: [...PROVIDER_IDS],
       };
       return {
         contents: [

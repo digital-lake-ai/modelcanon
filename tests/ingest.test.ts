@@ -144,7 +144,7 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     expect(getCacheDir({ XDG_CACHE_HOME: "/tmp/xdg" }, "linux")).toBe("/tmp/xdg/modelcanon");
   });
 
-  it("filters models.dev and LiteLLM exclusively to the 5 core providers", () => {
+  it("filters models.dev and LiteLLM exclusively to the 8 tracked providers and prevents marketplace leaks", () => {
     const mdModels = parseModelsDevPayload(
       fixture("models-dev.sample.json"),
       "2026-11-26T08:00:00Z",
@@ -153,6 +153,30 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     expect(mdModels[0].canonical_id).toBe("claude-opus-5-5");
     expect(mdModels[0].context_window).toBe(1000000);
     expect(mdModels[0].supports_temperature).toBe(false);
+
+    const scopedMd = parseModelsDevPayload(
+      JSON.stringify({
+        xai: { doc: "https://docs.x.ai/docs/models", models: { "grok-4.7": { id: "grok-4.7" } } },
+        zai: {
+          doc: "https://docs.z.ai/guides/overview/pricing",
+          models: { "glm-5.3": { id: "glm-5.3" } },
+        },
+        "zai-coding-plan": { models: { "glm-5.4": { id: "glm-5.4" } } },
+        alibaba: {
+          doc: "https://www.alibabacloud.com/help/en/model-studio/models",
+          models: {
+            "qwen4-max": { id: "qwen4-max" },
+            "kimi-k3.1-pro": { id: "kimi-k3.1-pro" },
+          },
+        },
+      }),
+      "2026-11-27T08:00:00Z",
+    );
+    expect(scopedMd.map((m) => `${m.provider}:${m.canonical_id}`)).toEqual([
+      "xai:grok-4.7",
+      "zai:glm-5.3",
+      "qwen:qwen4-max",
+    ]);
 
     const ltModels = parseLiteLlmPriceMap(fixture("litellm.sample.json"), "2026-11-26T08:00:00Z");
     expect(ltModels).toHaveLength(1);
@@ -167,10 +191,37 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
         "ft:gpt-3.5-turbo": { litellm_provider: "openai", mode: "chat" },
         "gpt-5-search-api": { litellm_provider: "openai", mode: "chat" },
         "codex-mini-latest": { litellm_provider: "openai" },
+        "dashscope/qwen4-max": { litellm_provider: "dashscope" },
+        "dashscope/deepseek-v4-pro": { litellm_provider: "dashscope" },
+        "xai/grok-4.7": { litellm_provider: "xai" },
+        "zai/glm-5.3": { litellm_provider: "zai" },
       }),
       "2026-11-26T08:00:00Z",
     );
-    expect(filteredLt.map((m) => m.canonical_id)).toEqual(["codex-mini-latest"]);
+    expect(filteredLt.map((m) => `${m.provider}:${m.canonical_id}`)).toEqual([
+      "openai:codex-mini-latest",
+      "qwen:qwen4-max",
+      "xai:grok-4.7",
+      "zai:glm-5.3",
+    ]);
+
+    const newProvidersRss = parseLiteLlmChangelogRss(
+      [
+        "<rss><channel>",
+        "<item><title>2 models added on xAI</title><description>grok-4.7 added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>GLM-5.3 added on Z.ai</title><description>glm-5.3 added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>Qwen4 Max added on Alibaba Cloud Model Studio</title><description>qwen4-max added</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>DeepSeek V4.1 Flash added on Alibaba Cloud Model Studio</title><description>deepseek-v4.1-flash-1017</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "<item><title>Grok 4.6 on Azure AI Foundry: Deprecation date added: 2027-08-24</title><description>grok-4.6</description><pubDate>Thu, 26 Nov 2026 04:00:00 GMT</pubDate></item>",
+        "</channel></rss>",
+      ].join(""),
+      "2026-11-27T08:00:00Z",
+    );
+    expect(newProvidersRss.map((e) => `${e.provider}:${e.models_affected[0]}`)).toEqual([
+      "xai:grok-4.7",
+      "zai:glm-5.3",
+      "qwen:qwen4-max",
+    ]);
 
     const rssEvents = parseLiteLlmChangelogRss(
       fixture("litellm-rss.sample.xml"),
@@ -185,7 +236,7 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
     expect(await fetchNativeProviderModels({})).toEqual([]);
 
     const discovered = await fetchNativeProviderModels(
-      { OPENAI_API_KEY: "sk-test", GEMINI_API_KEY: "AIza-test-key" },
+      { OPENAI_API_KEY: "sk-test", GEMINI_API_KEY: "AIza-test-key", XAI_API_KEY: "xai-test-key" },
       async (input, init) => {
         const reqUrl = String(input);
         const headers = (init?.headers ?? {}) as Record<string, string>;
@@ -195,6 +246,10 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
           return new Response(JSON.stringify({ models: [{ name: "models/gemini-4-neon" }] }), {
             status: 200,
           });
+        }
+        if (new URL(reqUrl).hostname === "api.x.ai") {
+          expect(headers.Authorization).toBe("Bearer xai-test-key");
+          return new Response(JSON.stringify({ data: [{ id: "grok-4.7" }] }), { status: 200 });
         }
         return new Response(JSON.stringify({ data: [{ id: "gpt-6.2-astra" }] }), { status: 200 });
       },
@@ -209,6 +264,11 @@ describe("HTTP fetcher, atomic cache, and catalog enrichers", () => {
         provider: "openai",
         modelIds: ["gpt-6.2-astra"],
         sourceUrl: "https://api.openai.com/v1/models",
+      },
+      {
+        provider: "xai",
+        modelIds: ["grok-4.7"],
+        sourceUrl: "https://api.x.ai/v1/models",
       },
     ]);
   });

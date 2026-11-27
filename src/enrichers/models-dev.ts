@@ -3,12 +3,15 @@ import type { ModelRecord, ProviderId } from "../schema/models.js";
 
 export const MODELS_DEV_API_URL = "https://models.dev/api.json";
 
-const MODELS_DEV_PROVIDER_MAP: Record<string, ProviderId> = {
-  google: "gemini",
-  anthropic: "claude",
-  openai: "openai",
-  deepseek: "deepseek",
-  moonshotai: "kimi",
+const MODELS_DEV_PROVIDER_MAP: Record<string, { provider: ProviderId; idFilter?: RegExp }> = {
+  google: { provider: "gemini" },
+  anthropic: { provider: "claude" },
+  openai: { provider: "openai" },
+  deepseek: { provider: "deepseek" },
+  moonshotai: { provider: "kimi" },
+  xai: { provider: "xai", idFilter: /^grok-/i },
+  zai: { provider: "zai", idFilter: /^glm-/i },
+  alibaba: { provider: "qwen", idFilter: /^(?:qwen|qwq)/i },
 };
 
 interface ModelsDevRawEntry {
@@ -59,10 +62,11 @@ export function parseModelsDevPayload(
   const parsed = JSON.parse(rawJson) as Record<string, ModelsDevRawProvider>;
   const records: ModelRecord[] = [];
 
-  for (const [providerKey, targetProvider] of Object.entries(MODELS_DEV_PROVIDER_MAP)) {
+  for (const [providerKey, mapping] of Object.entries(MODELS_DEV_PROVIDER_MAP)) {
     const providerBlock = parsed[providerKey];
     if (!providerBlock?.models) continue;
 
+    const targetProvider = mapping.provider;
     const officialUrl =
       typeof providerBlock.doc === "string" && providerBlock.doc.startsWith("https://")
         ? providerBlock.doc
@@ -71,6 +75,7 @@ export function parseModelsDevPayload(
     for (const [modelKey, entry] of Object.entries(providerBlock.models)) {
       const canonicalId = (entry.id || modelKey).trim();
       if (!isValidCatalogModelId(canonicalId)) continue;
+      if (mapping.idFilter && !mapping.idFilter.test(canonicalId)) continue;
 
       const aliases = new Set<string>();
       if (entry.canonical_model_id && entry.canonical_model_id !== canonicalId) {
@@ -172,5 +177,11 @@ function defaultProviderDocUrl(provider: ProviderId): string {
       return "https://api-docs.deepseek.com/updates";
     case "kimi":
       return "https://platform.moonshot.ai/docs/pricing/chat";
+    case "xai":
+      return "https://docs.x.ai/developers/models.md";
+    case "zai":
+      return "https://docs.z.ai/guides/overview/pricing.md";
+    case "qwen":
+      return "https://www.alibabacloud.com/help/en/model-studio/models.md";
   }
 }

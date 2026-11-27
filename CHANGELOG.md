@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-11-27
+
+### Added
+- **Eight-Provider Coverage (`T5`–`T9`):** Added official Markdown adapters for **xAI Grok** (`xai`, `docs.x.ai/developers/models.md` & `release-notes.md`), **Z.ai GLM** (`zai`, `docs.z.ai/guides/overview/pricing.md` & `release-notes.md`), and **Alibaba Qwen** (`qwen`, `model-studio/models.md`, `newly-released-models.md` International tab, & `api-compatibility-upgrade-notice.md`), alongside `models.dev`, `LiteLLM` (with strict Qwen/Grok/GLM filtering on multi-model gateways like DashScope and Alibaba Cloud Model Studio), first-party RSS allowlist entries, and optional `XAI_API_KEY` native `/v1/models` checks.
+- **Short-Alias Resolution & `match_strategy` (`T4`):** Added deterministic single-lineage `<provider>/<token>` inference (e.g., `gemini/argon` -> `gemini-4-argon`, `claude/opus` -> `claude-opus-5-5`, rejecting ambiguous modifier tokens and duplicate cross-provider collisions) and exposed additive `match_strategy` (`"exact" | "normalized" | "family_inferred" | "none"`) on `audit_model_id` plus nullable `effective_date` on `get_latest_updates`.
+
+### Changed
+- **Single Source of Truth & Extended Ranker (`T2`, `T3`, `T10`):** Centralized `PROVIDER_IDS` across MCP tools, resources, round-robin queries, and `build-seed.mjs`, upgraded `src/domain/rank.ts` for mid-ID `MMDD` snapshots, attached `qwen`/`qwq` generations, GLM/Qwen tiers, and provenance tie-breaking, and rebuilt `data/seed.json` (`517` models, `214` events).
+
+### Security
+- **Supply-Chain Posture Transparency (`T1`):** Documented production vs. dev-only transitive dependency boundaries and verified `0` CVEs/GHSAs in `SECURITY.md` (`#24`) with zero runtime dependency churn.
+
 ## [0.1.4] - 2026-11-26
 
 ### Fixed

@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { type CatalogSnapshot, CatalogSnapshotSchema } from "../schema/models.js";
 import { getBundledSeedPath, getSnapshotCachePath } from "./paths.js";
 
-export const CACHE_PACKAGE_VERSION = "0.1.4";
+export const CACHE_PACKAGE_VERSION = "0.2.0";
 
 export interface HttpCacheMetadata {
   etag: string | null;
