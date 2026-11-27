@@ -6,6 +6,8 @@ import { deepseekAdapter } from "../providers/deepseek.js";
 import { geminiAdapter } from "../providers/gemini.js";
 import { kimiAdapter } from "../providers/kimi.js";
 import { openaiAdapter } from "../providers/openai.js";
+import { xaiAdapter } from "../providers/xai.js";
+import { zaiAdapter } from "../providers/zai.js";
 import type {
   CatalogSnapshot,
   ConfidenceLevel,
@@ -51,7 +53,15 @@ export interface ProviderAdapter {
 }
 
 export function getProviderAdapters(): readonly ProviderAdapter[] {
-  return [geminiAdapter, claudeAdapter, openaiAdapter, deepseekAdapter, kimiAdapter];
+  return [
+    geminiAdapter,
+    claudeAdapter,
+    openaiAdapter,
+    deepseekAdapter,
+    kimiAdapter,
+    xaiAdapter,
+    zaiAdapter,
+  ];
 }
 
 export function getProviderAdapter(id: ProviderId): ProviderAdapter {

@@ -6,6 +6,8 @@ import { parseDeepSeekUpdatesHtml } from "../src/providers/deepseek.js";
 import { parseGeminiDeprecations } from "../src/providers/gemini.js";
 import { parseKimiDocs } from "../src/providers/kimi.js";
 import { parseOpenAiDeprecations } from "../src/providers/openai.js";
+import { parseXaiDocs } from "../src/providers/xai.js";
+import { parseZaiDocs } from "../src/providers/zai.js";
 import {
   extractDatedChangelogEvents,
   extractModelIds,
@@ -18,13 +20,15 @@ function fixture(name: string): string {
 }
 
 describe("Provider registry and 5 official adapters", () => {
-  it("registers exactly the 5 core ModelCanon providers", () => {
+  it("registers official ModelCanon provider adapters", () => {
     expect(getProviderAdapters().map((p) => p.id)).toEqual([
       "gemini",
       "claude",
       "openai",
       "deepseek",
       "kimi",
+      "xai",
+      "zai",
     ]);
   });
 
@@ -279,5 +283,69 @@ describe("Provider registry and 5 official adapters", () => {
         allowedPrefixes: /^(?:qwen|qwq)/i,
       }),
     ).toEqual(["qwen3.6-plus", "qwq-plus"]);
+
+    const xaiParsed = parseXaiDocs(
+      [
+        "| Model | Context | Input / 1M tokens |",
+        "| --- | --- | --- |",
+        "| grok-4.7 (< 200k prompt tokens) | 500k | $2.00 |",
+        "| grok-4.7 (≥ 200k prompt tokens) | 500k | $4.00 |",
+        "| Speech to Speech (grok-voice-2.0) — Deprecated | - | $0.08 / min |",
+      ].join("\n"),
+      [
+        "## November",
+        "### grok-build-0.1 end of life",
+        "`grok-build-0.1` reached end of life on November 19, 2026.",
+        "### grok-voice-transcribe-1.0 end of life",
+        "All requests are routed to `grok-voice-transcribe-2.0` starting October 2, 2026.",
+        "### Month only without year",
+        "`grok-4.6` updated on November 3 without explicit year.",
+      ].join("\n"),
+      "2026-11-27T08:00:00Z",
+    );
+    const grok47 = xaiParsed.models.find((m) => m.canonical_id === "grok-4.7");
+    expect(grok47?.status).toBe("active");
+    expect(grok47?.api_constraints).toContain(
+      "Long-context tier pricing applies at >= 200k prompt tokens",
+    );
+    expect(xaiParsed.models.find((m) => m.canonical_id === "grok-voice-2.0")?.status).toBe(
+      "deprecated",
+    );
+    const grokBuild = xaiParsed.models.find((m) => m.canonical_id === "grok-build-0.1");
+    expect(grokBuild?.status).toBe("retired");
+    expect(grokBuild?.shutdown_date).toBe("2026-11-19");
+    expect(
+      xaiParsed.models.find((m) => m.canonical_id === "grok-voice-transcribe-1.0")?.replacement_id,
+    ).toBe("grok-voice-transcribe-2.0");
+    expect(xaiParsed.events).toHaveLength(2);
+
+    const zaiParsed = parseZaiDocs(
+      [
+        "| Model | Input | Output |",
+        "| :- | :- | :- |",
+        "| GLM-5.3 | \\$1.4 | \\$4.4 |",
+        "> | Model | Input | Output |",
+        "> | :- | :- | :- |",
+        "> | GLM-4.7-Flash | Free | Free |",
+        "> | GLM-Image | \\$0.015 | - |",
+      ].join("\n"),
+      [
+        "**2026-08-26**",
+        "GLM-5.3-Flash",
+        "* Native visual capabilities for UI coding workflows.",
+      ].join("\n"),
+      "2026-11-27T08:00:00Z",
+    );
+    expect(zaiParsed.models.map((m) => m.canonical_id)).toEqual([
+      "glm-5.3",
+      "glm-4.7-flash",
+      "glm-5.3-flash",
+    ]);
+    expect(zaiParsed.events[0]).toMatchObject({
+      provider: "zai",
+      category: "new_model",
+      published_at: "2026-08-26",
+      models_affected: ["glm-5.3-flash"],
+    });
   });
 });
