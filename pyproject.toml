@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "modelcanon-mcp"
-version = "0.1.4"
-description = "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Gemini, Claude, OpenAI, DeepSeek, and Kimi across Linux, macOS, and Windows."
+version = "0.2.0"
+description = "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Gemini, Claude, OpenAI, DeepSeek, Kimi, xAI Grok, Z.ai GLM, and Alibaba Qwen across Linux, macOS, and Windows."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -26,6 +26,9 @@ keywords = [
   "openai",
   "deepseek",
   "kimi",
+  "xai",
+  "glm",
+  "qwen",
   "linux",
   "macos",
   "windows",

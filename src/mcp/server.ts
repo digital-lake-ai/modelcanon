@@ -7,7 +7,7 @@ import { CatalogCacheStore } from "../store/cache.js";
 import { registerModelCanonTools, type SnapshotProviderFn } from "./tools.js";
 
 export const MCP_SERVER_NAME = "modelcanon";
-export const MCP_SERVER_VERSION = "0.1.4";
+export const MCP_SERVER_VERSION = "0.2.0";
 
 export interface CreateServerOptions {
   cacheStore?: CatalogCacheStore;

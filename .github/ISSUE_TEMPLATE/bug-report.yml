@@ -12,7 +12,7 @@ body:
     attributes:
       label: ModelCanon Version
       description: Output of `npx @digital-lake/modelcanon --version`
-      placeholder: "0.1.4"
+      placeholder: "0.2.0"
     validations:
       required: true
   - type: dropdown

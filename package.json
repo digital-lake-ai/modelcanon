@@ -1,8 +1,8 @@
 {
   "name": "@digital-lake/modelcanon",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "mcpName": "io.github.digital-lake-ai/modelcanon",
-  "description": "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Google Gemini, Anthropic Claude, OpenAI, DeepSeek, and Moonshot Kimi on Linux, macOS, and Windows.",
+  "description": "Deterministic MCP server for official AI model changelogs, deprecation tracking, and live API specifications across Gemini, Claude, OpenAI, DeepSeek, Kimi, xAI Grok, Z.ai GLM, and Alibaba Qwen on Linux, macOS, and Windows.",
   "type": "module",
   "bin": {
     "modelcanon": "dist/cli.js"
@@ -33,6 +33,9 @@
     "openai-api",
     "deepseek",
     "kimi-ai",
+    "xai-grok",
+    "zai-glm",
+    "alibaba-qwen",
     "claude-code",
     "cursor",
     "antigravity",

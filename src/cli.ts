@@ -6,7 +6,7 @@ import { ingestFullCatalog } from "./registry/providers.js";
 import { CatalogCacheStore } from "./store/cache.js";
 
 export function getCliVersion(): string {
-  return "0.1.4";
+  return "0.2.0";
 }
 
 function printHelp(): void {
