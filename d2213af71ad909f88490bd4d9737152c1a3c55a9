@@ -1,0 +1,34 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:31:09.224Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-3"
+  },
+  "subtask": {
+    "id": "T10",
+    "title": "Enforce 8-provider seed invariants, rebuild live seed, and update docs",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "scripts/build-seed.mjs",
+        "data/seed.json",
+        "README.md",
+        "llms.txt",
+        "tests/rank.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run seed:build && npm run seed:check && npm test && npx biome check --error-on-warnings .",
+      "assignee": "gemini/3.8-flash (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 171
+  },
+  "tier": "tier-3",
+  "tierExplicit": true,
+  "author": "gemini/3.8-flash (antigravity)"
+}
