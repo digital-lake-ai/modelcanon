@@ -1,9 +1,10 @@
-import type {
-  CatalogSnapshot,
-  EventCategory,
-  ModelRecord,
-  ProviderId,
-  UpdateEvent,
+import {
+  type CatalogSnapshot,
+  type EventCategory,
+  type ModelRecord,
+  PROVIDER_IDS,
+  type ProviderId,
+  type UpdateEvent,
 } from "../schema/models.js";
 import { resolveModelMatch } from "./normalize.js";
 import { compareModelsForListing } from "./rank.js";
@@ -142,14 +143,6 @@ const SEVERITY_RANK: Record<UpdateEvent["severity"], number> = {
   info: 2,
 };
 
-const INTERLEAVE_PROVIDERS: readonly ProviderId[] = [
-  "gemini",
-  "claude",
-  "openai",
-  "deepseek",
-  "kimi",
-];
-
 export function getLatestUpdates(
   snapshot: CatalogSnapshot,
   filters: {
@@ -263,7 +256,7 @@ export function listActiveModels(
 
 function interleaveByProvider<T extends { model: ModelRecord }>(entries: readonly T[]): T[] {
   const buckets = new Map<ProviderId, T[]>();
-  for (const id of INTERLEAVE_PROVIDERS) {
+  for (const id of PROVIDER_IDS) {
     buckets.set(id, []);
   }
   for (const entry of entries) {
@@ -277,7 +270,7 @@ function interleaveByProvider<T extends { model: ModelRecord }>(entries: readonl
   let idx = 0;
   while (out.length < entries.length) {
     let addedInRound = false;
-    for (const id of INTERLEAVE_PROVIDERS) {
+    for (const id of PROVIDER_IDS) {
       const item = buckets.get(id)?.[idx];
       if (item) {
         out.push(item);

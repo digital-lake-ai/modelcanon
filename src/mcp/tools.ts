@@ -8,6 +8,7 @@ import {
   EventCategorySchema,
   EventSeveritySchema,
   ModelStatusSchema,
+  PROVIDER_IDS,
   PricingPer1MSchema,
   ProviderIdSchema,
 } from "../schema/models.js";
@@ -44,7 +45,7 @@ const AuditModelOutputShape = {
 
 const LatestUpdatesInputShape = {
   provider: z
-    .enum(["all", "gemini", "claude", "openai", "deepseek", "kimi"])
+    .enum(["all", ...PROVIDER_IDS])
     .optional()
     .describe(
       "Filter updates by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi') or 'all' (default: 'all').",
@@ -92,7 +93,7 @@ const LatestUpdatesOutputShape = {
 
 const ListActiveModelsInputShape = {
   provider: z
-    .enum(["all", "gemini", "claude", "openai", "deepseek", "kimi"])
+    .enum(["all", ...PROVIDER_IDS])
     .optional()
     .describe(
       "Filter active models by provider ('gemini', 'claude', 'openai', 'deepseek', 'kimi') or 'all' (default: 'all').",

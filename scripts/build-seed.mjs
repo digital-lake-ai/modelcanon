@@ -5,12 +5,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SEED_PATH = resolve(ROOT_DIR, "data", "seed.json");
-const REQUIRED_PROVIDERS = ["gemini", "claude", "openai", "deepseek", "kimi"];
 
-function assertSnapshotIntegrity(snapshot) {
+function assertSnapshotIntegrity(snapshot, requiredProviders) {
   const todayIso = snapshot.generated_at.slice(0, 10);
 
-  for (const provider of REQUIRED_PROVIDERS) {
+  for (const provider of requiredProviders) {
     const count = snapshot.models.filter((m) => m.provider === provider).length;
     if (count < 3) {
       throw new Error(`Seed integrity failed: provider '${provider}' has only ${count} model(s).`);
@@ -102,12 +101,14 @@ function assertSnapshotIntegrity(snapshot) {
 async function main() {
   const args = process.argv.slice(2);
   const checkOnly = args.includes("--check");
-  const { CatalogSnapshotSchema, ingestFullCatalog } = await import("../dist/index.js");
+  const { CatalogSnapshotSchema, PROVIDER_IDS, ingestFullCatalog } = await import(
+    "../dist/index.js"
+  );
 
   if (checkOnly) {
     const raw = readFileSync(SEED_PATH, "utf8");
     const snapshot = CatalogSnapshotSchema.parse(JSON.parse(raw));
-    const deprecatedCount = assertSnapshotIntegrity(snapshot);
+    const deprecatedCount = assertSnapshotIntegrity(snapshot, PROVIDER_IDS);
 
     process.stdout.write(
       `[OK] Seed verified: ${snapshot.models.length} models (${deprecatedCount} deprecated), ${snapshot.events.length} events.\n`,
@@ -127,7 +128,7 @@ async function main() {
     models: bundledModels,
   });
 
-  assertSnapshotIntegrity(validated);
+  assertSnapshotIntegrity(validated, PROVIDER_IDS);
 
   mkdirSync(dirname(SEED_PATH), { recursive: true });
   writeFileSync(SEED_PATH, JSON.stringify(validated), "utf8");

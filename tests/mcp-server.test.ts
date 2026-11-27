@@ -2,7 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it } from "vitest";
 import { createModelCanonServer } from "../src/mcp/server.js";
-import type { CatalogSnapshot } from "../src/schema/models.js";
+import { type CatalogSnapshot, PROVIDER_IDS } from "../src/schema/models.js";
 
 const SAMPLE_SNAPSHOT: CatalogSnapshot = {
   schema_version: "1.0.0",
@@ -147,6 +147,10 @@ describe("ModelCanon MCP Server over official SDK InMemoryTransport", () => {
         expect(tool.title).toMatch(/^ModelCanon [A-Z][a-z]+: /);
         expect(tool.description).toContain("Use when");
         expect(tool.description).toContain("Not for");
+        if (tool.name === "get_latest_updates" || tool.name === "list_active_models") {
+          const props = tool.inputSchema.properties as Record<string, { enum?: string[] }>;
+          expect(props.provider?.enum).toEqual(["all", ...PROVIDER_IDS]);
+        }
       }
 
       const sonnetAudit = await client.callTool({
