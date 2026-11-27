@@ -1,0 +1,34 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:20:20.856Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T2",
+    "title": "Centralize PROVIDER_IDS across MCP tools, server, queries, and seed check",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/mcp/tools.ts",
+        "src/mcp/server.ts",
+        "src/domain/query.ts",
+        "scripts/build-seed.mjs",
+        "tests/mcp-server.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npx vitest run tests/mcp-server.test.ts && npm run seed:check && npx biome check --error-on-warnings .",
+      "assignee": "gemini/4-hydrogen (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 57
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/4-hydrogen (antigravity)"
+}
