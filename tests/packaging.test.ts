@@ -71,6 +71,7 @@ describe("Multiplatform packaging, version parity, and registry manifests", () =
     expect(existsSync(resolve(ROOT, "llms.txt"))).toBe(true);
     expect(existsSync(resolve(ROOT, "CHANGELOG.md"))).toBe(true);
     expect(existsSync(resolve(ROOT, "SECURITY.md"))).toBe(true);
+    expect(readFileSync(resolve(ROOT, "SECURITY.md"), "utf8")).toContain("## Supply-Chain Posture");
 
     const out = execFileSync(
       process.execPath,

@@ -28,3 +28,13 @@ ModelCanon is designed as a deterministic, read-only MCP server with strict isol
 - **Read-Only Tool Contracts:** All three MCP tools declare `readOnlyHint: true`, `destructiveHint: false`, and `idempotentHint: true`.
 - **No Secret Persistence:** Optional provider API keys (`GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY`) are used strictly in memory via headers (`x-goog-api-key` for Gemini, never query parameters) and are never written to disk or logs.
 - **Offline & Read-Only Resilience:** Falls back automatically to in-memory caching and the bundled `data/seed.json` snapshot when disk writes or network calls fail.
+
+## Supply-Chain Posture & Dependency Disposition
+
+We audit supply-chain alerts rigorously (`0` known CVEs/GHSAs via `npm audit`, `0` license conflicts; see [#24](https://github.com/digital-lake-ai/modelcanon/issues/24)):
+
+| Package | Scope | Shipped in Runtime Package? | Assessment & Boundary |
+| :--- | :--- | :--- | :--- |
+| `@modelcontextprotocol/sdk`, `zod` | Direct `dependencies` (Production) | **Yes** | Required for official MCP SDK protocol compliance and Zod `outputSchema` validation. Remains under active security monitoring. |
+| `es-module-lexer` | Transitive `devDependencies` (via `vitest`) | **No** (`--omit=dev`, excluded from `package.json#files`) | Compiled WebAssembly ESM parser used exclusively during local/CI test runs (`0` CVEs/GHSAs). |
+| `@tybys/wasm-util` | Optional peer `devDependencies` (via `@napi-rs/wasm-runtime`) | **No** (not shipped in runtime distributions) | Uninstalled/optional dev-only WASI utility; never installed or executed by production MCP users. |
