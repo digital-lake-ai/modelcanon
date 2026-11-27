@@ -1,0 +1,45 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:32:03.467Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T11",
+    "title": "Synchronize atomic 0.2.0 release across 12 surfaces and changelog",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "scripts/sync-version.mjs",
+        "package.json",
+        "package-lock.json",
+        "server.json",
+        "pyproject.toml",
+        "python/modelcanon_mcp/__init__.py",
+        "src/cli.ts",
+        "src/mcp/server.ts",
+        "src/http/fetcher.ts",
+        "src/store/cache.ts",
+        "Dockerfile",
+        "llms.txt",
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        "CHANGELOG.md",
+        "SECURITY.md",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm run version:check && npx biome check --error-on-warnings . && npm run build && npm run seed:check && npm test && npx lognexus audit main",
+      "assignee": "gemini/3.8-flash-high (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 51
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/3.8-flash-high (antigravity)"
+}
