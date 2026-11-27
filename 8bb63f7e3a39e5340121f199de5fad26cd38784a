@@ -1,0 +1,35 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:23:39.127Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-3"
+  },
+  "subtask": {
+    "id": "T5",
+    "title": "Expand ProviderIdSchema to 8 providers and align tool and registry metadata",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/schema/models.ts",
+        "src/enrichers/models-dev.ts",
+        "src/enrichers/litellm.ts",
+        "src/mcp/tools.ts",
+        "server.json",
+        "tests/schema.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npm test && npx biome check --error-on-warnings .",
+      "assignee": "gemini/3.8-flash (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 46
+  },
+  "tier": "tier-3",
+  "tierExplicit": true,
+  "author": "gemini/3.8-flash (antigravity)"
+}
