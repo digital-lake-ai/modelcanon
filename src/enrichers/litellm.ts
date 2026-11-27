@@ -6,12 +6,15 @@ export const LITELLM_PRICES_URL =
   "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
 export const LITELLM_CHANGELOG_RSS_URL = "https://models.litellm.ai/changelog.xml";
 
-const LITELLM_PROVIDER_MAP: Record<string, ProviderId> = {
-  gemini: "gemini",
-  anthropic: "claude",
-  openai: "openai",
-  deepseek: "deepseek",
-  moonshot: "kimi",
+const LITELLM_PROVIDER_MAP: Record<string, { provider: ProviderId; idFilter?: RegExp }> = {
+  gemini: { provider: "gemini" },
+  anthropic: { provider: "claude" },
+  openai: { provider: "openai" },
+  deepseek: { provider: "deepseek" },
+  moonshot: { provider: "kimi" },
+  xai: { provider: "xai", idFilter: /^grok-/i },
+  zai: { provider: "zai", idFilter: /^glm-/i },
+  dashscope: { provider: "qwen", idFilter: /^(?:qwen|qwq)/i },
 };
 
 const EXCLUDED_LITELLM_MODES = new Set(["search", "rerank", "ocr", "moderation"]);
@@ -38,10 +41,11 @@ export function parseLiteLlmPriceMap(
 
   for (const [rawKey, entry] of Object.entries(parsed)) {
     if (rawKey === "sample_spec" || !entry || typeof entry !== "object") continue;
-    const provider = entry.litellm_provider
+    const mapped = entry.litellm_provider
       ? LITELLM_PROVIDER_MAP[entry.litellm_provider.toLowerCase()]
       : undefined;
-    if (!provider) continue;
+    if (!mapped) continue;
+    const provider = mapped.provider;
 
     // Skip non-conversational modes (search, rerank, ocr, moderation) while preserving undefined
     if (typeof entry.mode === "string" && EXCLUDED_LITELLM_MODES.has(entry.mode.toLowerCase())) {
@@ -55,6 +59,9 @@ export function parseLiteLlmPriceMap(
 
     const canonicalId = rawKey.includes("/") ? rawKey.slice(rawKey.indexOf("/") + 1) : rawKey;
     if (!isValidCatalogModelId(canonicalId)) {
+      continue;
+    }
+    if (mapped.idFilter && !mapped.idFilter.test(canonicalId)) {
       continue;
     }
     const aliases = rawKey !== canonicalId ? [rawKey] : [];
@@ -113,6 +120,16 @@ const FIRST_PARTY_RSS_PLATFORMS: Record<string, ProviderId> = {
   "moonshot ai": "kimi",
   moonshotai: "kimi",
   kimi: "kimi",
+  xai: "xai",
+  "z.ai": "zai",
+  zai: "zai",
+  "alibaba cloud model studio": "qwen",
+};
+
+const RSS_PROVIDER_ID_FILTERS: Partial<Record<ProviderId, RegExp>> = {
+  xai: /^grok-/i,
+  zai: /^glm-/i,
+  qwen: /^(?:qwen|qwq)/i,
 };
 
 export function parseLiteLlmChangelogRss(
@@ -168,7 +185,10 @@ export function parseLiteLlmChangelogRss(
       continue;
     }
 
-    const modelTokens = extractModelTokens(`${title} ${description}`);
+    const providerIdFilter = RSS_PROVIDER_ID_FILTERS[provider];
+    const modelTokens = extractModelTokens(`${title} ${description}`).filter(
+      (id) => !providerIdFilter || providerIdFilter.test(id),
+    );
     if (modelTokens.length === 0) continue;
 
     const rawDate = toIsoDate(pubDateRaw);
@@ -322,7 +342,7 @@ function matchesProviderText(lower: string, provider: ProviderId): boolean {
 function extractModelTokens(text: string): string[] {
   const sanitized = text.replace(/https?:\/\/\S+/gi, " ");
   const sourcePattern =
-    "\\b(?:gemini-[a-z0-9._-]+|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+)\\b";
+    "\\b(?:gemini-[a-z0-9._-]+|claude-[a-z0-9._-]+|gpt-[a-z0-9._-]+|chatgpt-[a-z0-9._-]+|codex-[a-z0-9._-]+|o1(?:-pro|-mini)?|o3(?:-pro|-mini)?|o4-mini|deepseek-[a-z0-9._-]+|kimi-[a-z0-9._-]+|moonshot-[a-z0-9._-]+|grok-[a-z0-9._-]+|glm-[a-z0-9._-]+|qwen(?:\\d[a-z0-9._-]*|-[a-z0-9._-]+)|qwq-[a-z0-9._-]+)\\b";
   const exactLower = sanitized.match(new RegExp(sourcePattern, "g")) ?? [];
   const caseInsensitive = sanitized.match(new RegExp(sourcePattern, "gi")) ?? [];
   return [

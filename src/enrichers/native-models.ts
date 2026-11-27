@@ -86,6 +86,19 @@ export async function fetchNativeProviderModels(
     );
   }
 
+  if (env.XAI_API_KEY?.trim()) {
+    tasks.push(
+      fetchModelsEndpoint(
+        "xai",
+        "https://api.x.ai/v1/models",
+        "https://api.x.ai/v1/models",
+        { Authorization: `Bearer ${env.XAI_API_KEY.trim()}` },
+        (json) => extractDataIds(json).filter((id) => /^grok-/i.test(id)),
+        fetchImpl,
+      ),
+    );
+  }
+
   const results = await Promise.all(tasks);
   return results.filter((item): item is NativeModelDiscovery => item !== null);
 }

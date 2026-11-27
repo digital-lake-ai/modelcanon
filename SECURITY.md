@@ -26,7 +26,7 @@ ModelCanon is designed as a deterministic, read-only MCP server with strict isol
 - **HTTPS-Only Transport:** Outbound HTTP ingestion enforces `https:` URLs, caps response size (`maxBytes`), limits redirects (`<= 3`), rejects `https` to `http` downgrades, and strips `Authorization`, `x-api-key`, and `x-goog-api-key` headers on cross-origin redirects.
 - **Zero Shell Execution:** Runtime code never spawns a shell (`shell: false` in Node.js and `shell=False` in Python `uvx` wrappers).
 - **Read-Only Tool Contracts:** All three MCP tools declare `readOnlyHint: true`, `destructiveHint: false`, and `idempotentHint: true`.
-- **No Secret Persistence:** Optional provider API keys (`GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY`) are used strictly in memory via headers (`x-goog-api-key` for Gemini, never query parameters) and are never written to disk or logs.
+- **No Secret Persistence:** Optional provider API keys (`GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY`, `XAI_API_KEY`) are used strictly in memory via headers (`x-goog-api-key` for Gemini, never query parameters) and are never written to disk or logs.
 - **Offline & Read-Only Resilience:** Falls back automatically to in-memory caching and the bundled `data/seed.json` snapshot when disk writes or network calls fail.
 
 ## Supply-Chain Posture & Dependency Disposition
