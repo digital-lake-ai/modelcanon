@@ -1,0 +1,35 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:26:00.264Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T7",
+    "title": "Extend catalog enrichers, RSS allowlist, and optional XAI_API_KEY discovery",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/enrichers/models-dev.ts",
+        "src/enrichers/litellm.ts",
+        "src/enrichers/native-models.ts",
+        "tests/ingest.test.ts",
+        "SECURITY.md",
+        "README.md"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npx vitest run tests/ingest.test.ts && npx biome check --error-on-warnings .",
+      "assignee": "gemini/4-hydrogen (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 77
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/4-hydrogen (antigravity)"
+}
