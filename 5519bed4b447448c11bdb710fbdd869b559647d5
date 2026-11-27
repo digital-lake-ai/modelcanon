@@ -1,0 +1,32 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:28:14.513Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-2"
+  },
+  "subtask": {
+    "id": "T9",
+    "title": "Add official Alibaba Qwen adapter and breaking-change notice support",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "src/providers/qwen.ts",
+        "src/registry/providers.ts",
+        "tests/providers.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "narrow",
+      "verificationCmd": "npm run build && npx vitest run tests/providers.test.ts && npx biome check --error-on-warnings .",
+      "assignee": "gemini/4-hydrogen (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 60
+  },
+  "tier": "tier-2",
+  "tierExplicit": true,
+  "author": "gemini/4-hydrogen (antigravity)"
+}
