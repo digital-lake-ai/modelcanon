@@ -6,6 +6,7 @@ import { deepseekAdapter } from "../providers/deepseek.js";
 import { geminiAdapter } from "../providers/gemini.js";
 import { kimiAdapter } from "../providers/kimi.js";
 import { openaiAdapter } from "../providers/openai.js";
+import { qwenAdapter } from "../providers/qwen.js";
 import { xaiAdapter } from "../providers/xai.js";
 import { zaiAdapter } from "../providers/zai.js";
 import type {
@@ -61,6 +62,7 @@ export function getProviderAdapters(): readonly ProviderAdapter[] {
     kimiAdapter,
     xaiAdapter,
     zaiAdapter,
+    qwenAdapter,
   ];
 }
 
@@ -143,11 +145,14 @@ export function extractDatedChangelogEvents(
     sourceUrl: string;
     detectedAt: string;
     limit?: number;
+    forceCategory?: EventCategory;
+    allowedPrefixes?: RegExp;
   },
 ): UpdateEvent[] {
   const limit = opts.limit ?? 20;
   const lines = markdown.split(/\r?\n/);
   const events: UpdateEvent[] = [];
+  const todayIso = opts.detectedAt.slice(0, 10);
   let currentDate: string | null = null;
   let buffer: string[] = [];
 
@@ -157,8 +162,11 @@ export function extractDatedChangelogEvents(
     const cleaned = stripMarkdownNoise(rawSection);
     if (cleaned.length < 20) return;
 
-    const { category, severity, confidence } = classifyUpdateText(cleaned);
-    const models = extractModelIds(rawSection);
+    const classified = classifyUpdateText(cleaned);
+    const category = opts.forceCategory ?? classified.category;
+    const severity = opts.forceCategory === "breaking_change" ? "warning" : classified.severity;
+    const confidence = opts.forceCategory ? "high" : classified.confidence;
+    const models = extractModelIds(rawSection, { allowedPrefixes: opts.allowedPrefixes });
     const summary = firstSentence(cleaned, 220);
     const quote = firstSentence(cleaned, 200);
     const slugTail = summary
@@ -179,7 +187,7 @@ export function extractDatedChangelogEvents(
       agent_summary: summary,
       evidence_quote: quote,
       source_url: opts.sourceUrl,
-      published_at: currentDate,
+      published_at: minIsoDate(currentDate, todayIso),
       detected_at: opts.detectedAt,
     });
   };

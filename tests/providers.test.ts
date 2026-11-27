@@ -6,6 +6,7 @@ import { parseDeepSeekUpdatesHtml } from "../src/providers/deepseek.js";
 import { parseGeminiDeprecations } from "../src/providers/gemini.js";
 import { parseKimiDocs } from "../src/providers/kimi.js";
 import { parseOpenAiDeprecations } from "../src/providers/openai.js";
+import { parseQwenDocs } from "../src/providers/qwen.js";
 import { parseXaiDocs } from "../src/providers/xai.js";
 import { parseZaiDocs } from "../src/providers/zai.js";
 import {
@@ -20,7 +21,7 @@ function fixture(name: string): string {
 }
 
 describe("Provider registry and 5 official adapters", () => {
-  it("registers official ModelCanon provider adapters", () => {
+  it("registers all 8 official ModelCanon provider adapters", () => {
     expect(getProviderAdapters().map((p) => p.id)).toEqual([
       "gemini",
       "claude",
@@ -29,6 +30,7 @@ describe("Provider registry and 5 official adapters", () => {
       "kimi",
       "xai",
       "zai",
+      "qwen",
     ]);
   });
 
@@ -346,6 +348,52 @@ describe("Provider registry and 5 official adapters", () => {
       category: "new_model",
       published_at: "2026-08-26",
       models_affected: ["glm-5.3-flash"],
+    });
+
+    const qwenParsed = parseQwenDocs(
+      [
+        "# Recommended models",
+        "<style>.rkb-ask-ai { color: red; }</style>",
+        '<CardGroup cols={3}><Card title="qwen4-max">Flagship</Card><Card title="happyoyster-1.0-acting">Roleplay</Card><Card title="qwen3-rerank">Rerank</Card></CardGroup>',
+      ].join("\n"),
+      [
+        '<Tabs><Tab title="Singapore">',
+        "### 2026-11-25",
+        "#### decision-model",
+        "Business classifier.",
+        "### 2026-11-20",
+        "#### mindlab/macaron-v1.1-venti-pro",
+        "Third-party model.",
+        "### 2026-11-16",
+        "#### qwen4-max",
+        "Flagship Qwen 4 reasoning and coding release.",
+        '</Tab><Tab title="China (Beijing)">',
+        "### 2026-11-18",
+        "#### qwen3.8-china-only",
+        "Beijing region only.",
+        "</Tab></Tabs>",
+      ].join("\n"),
+      [
+        "# API compatibility upgrades",
+        "## November 2, 2026",
+        "<table><tbody><tr><td>Align `max_tokens`</td><td>DashScope API</td><td>Starting with `qwen4-max-preview` / `qwen4-max`, `max_tokens` caps reasoning plus final answer combined.</td></tr></tbody></table>",
+      ].join("\n"),
+      "2026-11-27T08:00:00Z",
+    );
+    expect(qwenParsed.models.map((m) => m.canonical_id)).toEqual(["qwen4-max"]);
+    expect(qwenParsed.events).toHaveLength(2);
+    expect(qwenParsed.events[0]).toMatchObject({
+      provider: "qwen",
+      category: "new_model",
+      published_at: "2026-11-16",
+      models_affected: ["qwen4-max"],
+    });
+    expect(qwenParsed.events[1]).toMatchObject({
+      provider: "qwen",
+      category: "breaking_change",
+      severity: "warning",
+      published_at: "2026-11-02",
+      models_affected: ["qwen4-max-preview", "qwen4-max"],
     });
   });
 });
