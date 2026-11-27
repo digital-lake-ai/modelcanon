@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SEED_PATH = resolve(ROOT_DIR, "data", "seed.json");
 
-function assertSnapshotIntegrity(snapshot, requiredProviders) {
+function assertSnapshotIntegrity(snapshot, requiredProviders, listActiveModels) {
   const todayIso = snapshot.generated_at.slice(0, 10);
 
   for (const provider of requiredProviders) {
@@ -16,8 +16,28 @@ function assertSnapshotIntegrity(snapshot, requiredProviders) {
     }
   }
 
+  const seenCanonicalProviders = new Map();
   for (const model of snapshot.models) {
     const id = model.canonical_id;
+    const lowerId = id.toLowerCase();
+    const prevProvider = seenCanonicalProviders.get(lowerId);
+    if (prevProvider && prevProvider !== model.provider) {
+      throw new Error(
+        `Seed integrity failed: canonical_id '${id}' appears under both '${prevProvider}' and '${model.provider}'.`,
+      );
+    }
+    seenCanonicalProviders.set(lowerId, model.provider);
+
+    if (model.provider === "xai" && !/^grok-/i.test(id)) {
+      throw new Error(`Seed integrity failed: non-Grok ID '${id}' leaked under provider 'xai'.`);
+    }
+    if (model.provider === "zai" && !/^glm-/i.test(id)) {
+      throw new Error(`Seed integrity failed: non-GLM ID '${id}' leaked under provider 'zai'.`);
+    }
+    if (model.provider === "qwen" && !/^(?:qwen|qwq)/i.test(id)) {
+      throw new Error(`Seed integrity failed: non-Qwen ID '${id}' leaked under provider 'qwen'.`);
+    }
+
     if (
       /\.(?:md|mdx|txt|html?|json|xml|ya?ml)$/i.test(id) ||
       id.includes(":") ||
@@ -95,20 +115,35 @@ function assertSnapshotIntegrity(snapshot, requiredProviders) {
     throw new Error("Seed integrity failed: expected at least 1 deprecated model entry.");
   }
 
+  const snapNow = new Date(snapshot.generated_at);
+  for (const [provider, expectedTop] of [
+    ["xai", "grok-4.7"],
+    ["zai", "glm-5.3"],
+    ["qwen", "qwen4-max"],
+  ]) {
+    const topId = listActiveModels(snapshot, { provider, limit: 1 }, snapNow).models[0]
+      ?.canonical_id;
+    if (topId !== expectedTop) {
+      throw new Error(
+        `Seed integrity failed: expected top '${provider}' model '${expectedTop}', got '${topId ?? "missing"}'.`,
+      );
+    }
+  }
+
   return deprecatedCount;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const checkOnly = args.includes("--check");
-  const { CatalogSnapshotSchema, PROVIDER_IDS, ingestFullCatalog } = await import(
+  const { CatalogSnapshotSchema, PROVIDER_IDS, ingestFullCatalog, listActiveModels } = await import(
     "../dist/index.js"
   );
 
   if (checkOnly) {
     const raw = readFileSync(SEED_PATH, "utf8");
     const snapshot = CatalogSnapshotSchema.parse(JSON.parse(raw));
-    const deprecatedCount = assertSnapshotIntegrity(snapshot, PROVIDER_IDS);
+    const deprecatedCount = assertSnapshotIntegrity(snapshot, PROVIDER_IDS, listActiveModels);
 
     process.stdout.write(
       `[OK] Seed verified: ${snapshot.models.length} models (${deprecatedCount} deprecated), ${snapshot.events.length} events.\n`,
@@ -128,7 +163,7 @@ async function main() {
     models: bundledModels,
   });
 
-  assertSnapshotIntegrity(validated, PROVIDER_IDS);
+  assertSnapshotIntegrity(validated, PROVIDER_IDS, listActiveModels);
 
   mkdirSync(dirname(SEED_PATH), { recursive: true });
   writeFileSync(SEED_PATH, JSON.stringify(validated), "utf8");

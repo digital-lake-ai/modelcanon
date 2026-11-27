@@ -127,7 +127,7 @@ describe("Generational and base-model listing ranker", () => {
     ]);
   });
 
-  it("ranks flagship base models first across all 5 providers in data/seed.json", () => {
+  it("ranks flagship base models first across all 8 providers in data/seed.json", () => {
     const seedPath = resolve(import.meta.dirname, "../data/seed.json");
     const seed = JSON.parse(readFileSync(seedPath, "utf8")) as CatalogSnapshot;
     const now = new Date("2026-11-26T20:00:00Z");
@@ -160,6 +160,21 @@ describe("Generational and base-model listing ranker", () => {
       (m) => m.canonical_id,
     );
     expect(geminiTop[0]).toBe("gemini-4-argon");
+
+    const xaiTop = listActiveModels(seed, { provider: "xai", limit: 5 }, now).models.map(
+      (m) => m.canonical_id,
+    );
+    expect(xaiTop[0]).toBe("grok-4.7");
+
+    const zaiTop = listActiveModels(seed, { provider: "zai", limit: 5 }, now).models.map(
+      (m) => m.canonical_id,
+    );
+    expect(zaiTop[0]).toBe("glm-5.3");
+
+    const qwenTop = listActiveModels(seed, { provider: "qwen", limit: 5 }, now).models.map(
+      (m) => m.canonical_id,
+    );
+    expect(qwenTop[0]).toBe("qwen4-max");
   });
 
   it("ranks qwen, glm, and xai flagship base models ahead of variants, snapshots, and litellm-only entries", () => {

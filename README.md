@@ -139,6 +139,7 @@ Example `audit_model_id({ "model_id": "claude-sonnet-4-5" })`:
   "canonical_id": "claude-sonnet-4-5-20250929",
   "provider": "claude",
   "status": "deprecated",
+  "match_strategy": "exact",
   "days_until_shutdown": 4,
   "deprecation_date": "2026-09-30",
   "shutdown_date": "2026-11-30",
