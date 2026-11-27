@@ -23,10 +23,19 @@ export const MODIFIER_TOKENS = new Set([
   "live",
   "realtime",
   "tts",
+  "plus",
+  "flashx",
+  "air",
+  "airx",
+  "beta",
+  "reasoning",
+  "instruct",
+  "omni",
+  "vl",
 ]);
 
 export const FLAGSHIP_MODEL_REGEX =
-  /^(?:gemini-\d|claude-(?:opus|sonnet|haiku|fable|mythos)|gpt-\d|o[134]|codex-|chatgpt-|deepseek-(?:v\d|r\d|flash)|kimi-k\d)/i;
+  /^(?:gemini-\d|claude-(?:opus|sonnet|haiku|fable|mythos)|gpt-\d|o[134]|codex-|chatgpt-|deepseek-(?:v\d|r\d|flash)|kimi-k\d|grok-\d|glm-\d|qwen(?:\d|-(?:max|plus|flash|turbo|coder))|qwq-)/i;
 
 const VARIANT_TOKENS = new Set([
   "preview",
@@ -38,6 +47,9 @@ const VARIANT_TOKENS = new Set([
   "healthcare",
   "law",
   "search",
+  "beta",
+  "latest",
+  "legal",
 ]);
 
 const AUXILIARY_TOKENS = new Set([
@@ -54,6 +66,11 @@ const AUXILIARY_TOKENS = new Set([
   "lyria",
   "robotics",
   "translate",
+  "imagine",
+  "voice",
+  "asr",
+  "ocr",
+  "rerank",
 ]);
 
 export interface ModelShape {
@@ -102,19 +119,43 @@ export function parseModelShape(canonicalId: string): ModelShape {
     break;
   }
 
+  // Strip mid-ID MMDD snapshot segments (e.g., grok-4.20-0309-reasoning, glm-4-32b-0414-128k)
+  if (core.length > 1) {
+    const filteredCore: string[] = [core[0]];
+    for (let i = 1; i < core.length; i += 1) {
+      if (/^(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])$/.test(core[i])) {
+        isSnapshot = true;
+      } else {
+        filteredCore.push(core[i]);
+      }
+    }
+    core.splice(0, core.length, ...filteredCore);
+  }
+
   const generation: number[] = [];
   const lineageSegments: string[] = [];
   let parsedGen = false;
 
   for (let i = 0; i < core.length; i += 1) {
     const seg = core[i];
-    if (!parsedGen && /^(?:[vrko]?\d+(?:\.\d+)*|\d+o)$/.test(seg)) {
+    if (i === 0) {
+      const attached = /^(qwen|qwq)(\d+(?:\.\d+)*)$/.exec(seg);
+      if (attached) {
+        lineageSegments.push(attached[1]);
+        for (const part of attached[2].split(".")) {
+          generation.push(Number.parseInt(part, 10));
+        }
+        parsedGen = true;
+        continue;
+      }
+    }
+    if (!parsedGen && /^(?:[vrko]?\d+(?:\.\d+)*|\d+(?:\.\d+)*[ov])$/.test(seg)) {
       parsedGen = true;
-      const numericPart = seg.replace(/^[vrko]/, "").replace(/o$/, "");
+      const numericPart = seg.replace(/^[vrko]/, "").replace(/[ov]$/, "");
       for (const part of numericPart.split(".")) {
         generation.push(Number.parseInt(part, 10));
       }
-      while (i + 1 < core.length && /^\d+$/.test(core[i + 1])) {
+      while (i + 1 < core.length && /^\d{1,2}$/.test(core[i + 1])) {
         i += 1;
         generation.push(Number.parseInt(core[i], 10));
       }
@@ -134,12 +175,30 @@ export function parseModelShape(canonicalId: string): ModelShape {
     } else if (coreSet.has("haiku")) {
       tierRank = 2;
     }
-  } else if (coreSet.has("lite") || coreSet.has("mini") || coreSet.has("nano")) {
+  } else if (core[0]?.startsWith("qwen") || core[0] === "qwq") {
+    if (coreSet.has("lite") || coreSet.has("mini") || coreSet.has("nano")) {
+      tierRank = 3;
+    } else if (coreSet.has("flash") || coreSet.has("turbo")) {
+      tierRank = 2;
+    } else if (coreSet.has("plus")) {
+      tierRank = 1;
+    } else if (coreSet.has("max") || coreSet.has("pro") || coreSet.has("ultra")) {
+      tierRank = 0;
+    }
+  } else if (
+    coreSet.has("lite") ||
+    coreSet.has("mini") ||
+    coreSet.has("nano") ||
+    coreSet.has("air") ||
+    coreSet.has("airx")
+  ) {
     tierRank = 3;
-  } else if (coreSet.has("flash")) {
+  } else if (coreSet.has("flash") || coreSet.has("flashx") || coreSet.has("turbo")) {
     tierRank = 2;
   } else if (coreSet.has("pro") || coreSet.has("max") || coreSet.has("ultra")) {
     tierRank = 0;
+  } else if (coreSet.has("plus")) {
+    tierRank = 1;
   }
 
   let variantRank: 0 | 1 | 2 = 0;
@@ -175,6 +234,10 @@ export function compareModelsForListing(a: RankableModelEntry, b: RankableModelE
   const aVerified = a.model.source_origin === "live_verified" ? 0 : 1;
   const bVerified = b.model.source_origin === "live_verified" ? 0 : 1;
   if (aVerified !== bVerified) return aVerified - bVerified;
+
+  const aLiteLlmOnly = a.model.official_url.includes("BerriAI/litellm") ? 1 : 0;
+  const bLiteLlmOnly = b.model.official_url.includes("BerriAI/litellm") ? 1 : 0;
+  if (aLiteLlmOnly !== bLiteLlmOnly) return aLiteLlmOnly - bLiteLlmOnly;
 
   const aFlagship = FLAGSHIP_MODEL_REGEX.test(a.model.canonical_id) ? 0 : 1;
   const bFlagship = FLAGSHIP_MODEL_REGEX.test(b.model.canonical_id) ? 0 : 1;
