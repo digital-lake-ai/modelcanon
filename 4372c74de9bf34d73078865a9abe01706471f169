@@ -1,0 +1,31 @@
+{
+  "$schema": "https://lognexus.digital-lake.ai/schemas/git-note-v1.json",
+  "generator": "LogNexus",
+  "version": "1.6.2",
+  "timestamp": "2026-11-27T14:19:20.535Z",
+  "issue": {
+    "id": 4,
+    "title": "feat(providers): evaluate xAI Grok, Alibaba Qwen, and Z.ai GLM adapters",
+    "tier": "tier-3"
+  },
+  "subtask": {
+    "id": "T1",
+    "title": "Document supply-chain posture and dev-only dependency boundaries in SECURITY.md",
+    "status": "completed",
+    "contract": {
+      "allowedFiles": [
+        "SECURITY.md",
+        "tests/packaging.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "decisionBudget": "none",
+      "verificationCmd": "npm test && npx biome check --error-on-warnings .",
+      "assignee": "gemini/3.8-flash (antigravity)",
+      "isolation": "subagent"
+    },
+    "durationSec": 29
+  },
+  "tier": "tier-3",
+  "tierExplicit": true,
+  "author": "gemini/3.8-flash (antigravity)"
+}
